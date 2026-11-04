@@ -185,6 +185,7 @@ jobs:
           machine_config=$(printf '%s' "$SAGIT_MACHINE_CONFIG" | tr '[:upper:]' '[:lower:]')
           kernel="xnu/out/kernel.$kernel_config.$machine_config"
           test -f "$kernel"
+          mkdir -p shim/out
           python3 tools/mkadt.py shim/out/sagit.adt --sagit
           python3 tools/mkpayload.py "$kernel" shim/out/sagit.adt shim/out/payload.bin \
             --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress sagit=1 sweettouch=0 sweethw=0 sweetbattery=0 sweetcpufreq=0 sweetbl=0 gpu=0 modem=0'
