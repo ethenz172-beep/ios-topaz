@@ -33,11 +33,15 @@ if [ "$SAGIT" = 1 ]; then
 		cat "$1" >> out/Image
 		python3 -c 'import os,struct,sys; f=open(sys.argv[1],"r+b"); f.seek(16); f.write(struct.pack("<Q", os.path.getsize(sys.argv[1])))' out/Image
 	fi
-	# Reuse the exact v0 layout, ramdisk and appended DTBs from the stock image.
-	: "${SAGIT_BOOT_TEMPLATE:?set SAGIT_BOOT_TEMPLATE to the backed-up stock boot.img}"
-	python3 ../tools/pack_sagit_boot.py "$SAGIT_BOOT_TEMPLATE" out/Image out/shim-boot.img
+	# Package locally with the owner's stock template, or leave a raw Image for CI.
+	if [ -n "${SAGIT_BOOT_TEMPLATE:-}" ]; then
+		python3 ../tools/pack_sagit_boot.py "$SAGIT_BOOT_TEMPLATE" out/Image out/shim-boot.img
+		ls -l out/Image out/shim-boot.img
+	else
+		cp out/Image out/sagit-shim.Image
+		ls -l out/Image out/sagit-shim.Image
+	fi
 	${HOST_CC:-gcc} -O1 -Wall -o out/host_test console.c host_test.c && ./out/host_test
-	ls -l out/Image out/shim-boot.img
 	exit 0
 fi
 # Ramdisk: an xnu payload (tools/mkpayload.py) if given as $1, else an empty

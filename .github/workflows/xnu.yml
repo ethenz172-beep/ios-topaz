@@ -153,3 +153,50 @@ jobs:
           name: xnu-kernel
           path: out/
           if-no-files-found: warn
+
+  sagit-bringup:
+    # Only run this extra job when the user dispatches the workflow on the
+    # dedicated Mi 6 branch. The template boot image stays on the user's PC.
+    if: github.ref == 'refs/heads/sagit-port'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      SAGIT_KERNEL_CONFIG: ${{ inputs.kernel_config || 'DEVELOPMENT' }}
+      SAGIT_MACHINE_CONFIG: ${{ inputs.machine_config || 'SWEET' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: xnu-kernel
+          path: xnu/out
+
+      - name: Install the bare-metal cross compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Build Sagit ADT, payload and shim Image
+        run: |
+          test "$SAGIT_MACHINE_CONFIG" = SWEET
+          kernel_config=$(printf '%s' "$SAGIT_KERNEL_CONFIG" | tr '[:upper:]' '[:lower:]')
+          machine_config=$(printf '%s' "$SAGIT_MACHINE_CONFIG" | tr '[:upper:]' '[:lower:]')
+          kernel="xnu/out/kernel.$kernel_config.$machine_config"
+          test -f "$kernel"
+          python3 tools/mkadt.py shim/out/sagit.adt --sagit
+          python3 tools/mkpayload.py "$kernel" shim/out/sagit.adt shim/out/payload.bin \
+            --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress'
+          SAGIT=1 ./shim/build.sh shim/out/payload.bin
+          sha256sum shim/out/sagit-shim.Image shim/out/sagit.adt shim/out/payload.bin > shim/out/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sagit-bringup
+          path: |
+            shim/out/sagit-shim.Image
+            shim/out/sagit.adt
+            shim/out/payload.bin
+            shim/out/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7

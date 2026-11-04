@@ -3,10 +3,11 @@
 ## Current handoff: Mi 6 (`sagit`) local port branch
 
 - Active local branch: `sagit-port`, based on `topaz`. Latest committed change `b6a9e58` adds the initial Sagit ADT and shim board configuration.
-- Current uncommitted work adds an Android boot v0 packer and a `SAGIT=1` build path that preserves the stock header, ramdisk and appended Qualcomm DTBs.
+- Committed work adds an Android boot v0 packer and a `SAGIT=1` build path that preserves the stock header, ramdisk and appended Qualcomm DTBs.
+- Current uncommitted work adds a GitHub Actions job that builds the kernel on macOS, then the Sagit ADT/payload/shim Image on Ubuntu. It intentionally does not upload the handset's stock boot image.
 - The Sagit ADT generator and boot v0 packer have Python syntax, round-trip and checksum checks. No cross-compiled shim/XNU image exists and nothing has been boot-tested on the Mi 6.
 - Hardware inputs: `work/sagit-live.dtb`; persistent handoff: `work/sagit-port-handoff.md`; board usage notes: `SAGIT_PORT.md`.
-- Next: make a hosted build path, then review the MSM8998 command-mode display and remaining Topaz-specific XNU assumptions. Early device tests must continue using `fastboot boot`.
+- Next: validate the workflow on a fork/hosted runner, then review the MSM8998 command-mode display and remaining Topaz-specific XNU assumptions. Early device tests must continue using `fastboot boot`.
 
 ## Agent handoff / active work (2026-10-15, latest)
 

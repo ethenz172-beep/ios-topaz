@@ -16,7 +16,24 @@ in ios-topaz. It does not contain a bootable iOS image yet.
 Values came from the connected Mi 6's live FDT and are not a generic MSM8998
 reference configuration.
 
-## Current local build path
+## Hosted build path
+
+The `xnu.yml` workflow has a Sagit job on the `sagit-port` branch. Dispatch it
+with `MACHINE_CONFIG=SWEET` and `KERNEL_CONFIG=DEVELOPMENT`. It builds the
+kernel on macOS, then uses an Ubuntu runner for the Sagit ADT, payload and shim
+Image. The artifact contains no handset boot image or device dump.
+
+After downloading the `sagit-bringup` artifact to Windows, create a temporary
+boot v0 image locally from the saved stock boot image:
+
+```powershell
+python tools\pack_sagit_boot.py C:\path\to\backed-up\boot.img `
+  C:\path\to\sagit-shim.Image C:\path\to\sagit-fastboot-boot.img
+```
+
+Use `fastboot boot sagit-fastboot-boot.img` only. Do not use `fastboot flash`.
+
+## Local build path
 
 Generate the Sagit Apple Device Tree:
 
@@ -31,9 +48,9 @@ SAGIT=1 SAGIT_BOOT_TEMPLATE=/path/to/backed-up/boot.img ./shim/build.sh [payload
 ```
 
 `tools/pack_sagit_boot.py` preserves the stock header, ramdisk and appended
-Qualcomm DTBs while replacing the kernel Image. The output is for `fastboot
-boot` only. The script was round-trip checked with a synthetic arm64 Image;
-the Sagit shim itself has not been compiled or boot-tested.
+Qualcomm DTBs while replacing the kernel Image. The script was round-trip
+checked with a synthetic arm64 Image; the Sagit shim itself has not been
+compiled or boot-tested.
 
 ## Remaining blockers
 
