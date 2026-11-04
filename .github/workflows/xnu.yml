@@ -186,7 +186,7 @@ jobs:
           test -f "$kernel"
           python3 tools/mkadt.py shim/out/sagit.adt --sagit
           python3 tools/mkpayload.py "$kernel" shim/out/sagit.adt shim/out/payload.bin \
-            --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress'
+            --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress sagit=1'
           SAGIT=1 ./shim/build.sh shim/out/payload.bin
           sha256sum shim/out/sagit-shim.Image shim/out/sagit.adt shim/out/payload.bin > shim/out/SHA256SUMS
 
