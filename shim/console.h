@@ -1,9 +1,15 @@
 #pragma once
 #include <stdint.h>
 
-#define FB_BASE		0x5c000000UL	/* reserved-memory cont_splash_region */
+#ifdef SAGIT
+#define FB_BASE		0x9d400000UL	/* Mi 6 splash_region from the live FDT */
+#define FB_W		1080
+#define FB_H		1920
+#else
+#define FB_BASE		0x5c000000UL	/* topaz cont_splash_region */
 #define FB_W		1080
 #define FB_H		2400
+#endif
 #define FB_STRIDE	(FB_W * 4)	/* a8r8g8b8, matches mainline simplefb */
 
 #define RED	0xffff0000U

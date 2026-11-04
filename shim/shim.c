@@ -12,12 +12,18 @@
 #include "loader.h"
 #include "ufs.h"
 
-#define IMEM_RESTART_REASON	0x0c12565cUL	/* qcom,msm-imem@c125000 restart_reason@65c */
-#define RESTART_BOOTLOADER	0x77665500U
+#ifdef SAGIT
+#define IMEM_RESTART_REASON	0x146bf65cUL	/* qcom,msm-imem@146bf000 restart_reason@65c */
+#define PSHOLD			0x010ac000UL	/* qcom,pshold */
+#define GICD_BASE		0x17a00000UL
+#define GICR_BASE		0x17b00000UL
+#else
+#define IMEM_RESTART_REASON	0x0c12565cUL	/* topaz msm-imem restart_reason */
 #define PSHOLD			0x0440b000UL
-
 #define GICD_BASE		0x0f200000UL
 #define GICR_BASE		0x0f300000UL
+#endif
+#define RESTART_BOOTLOADER	0x77665500U
 #define GICR_SIZE		0x100000UL
 #define GICR_PE_SIZE		0x20000UL
 #define GICR_TYPER		0x08
@@ -59,7 +65,7 @@ static inline void wr8(uintptr_t a, uint8_t v) { *(volatile uint8_t *)a = v; }
 extern char secondary_entry[];
 
 static const char *stage;	/* set at runtime: no absolute pointers in data */
-/* topaz: CPU0-3 (A53) at MPIDR 0x0-0x3, CPU4-7 (A73) at 0x100-0x103 */
+/* Kryo: four Silver cores at 0x0-0x3, four Gold cores at 0x100-0x103 */
 static inline uint64_t cpu_mpidr(int i) { return (uint64_t)(i >> 2) << 8 | (i & 3); }
 
 static volatile uint64_t sec_mpidr[NR_CPUS];
@@ -244,6 +250,7 @@ static uint64_t speed_ticks(void)
  * Gold cluster to its top cpufreq-hw level before xnu (which has no cpufreq
  * driver): freq-domain1 0xf523000, LUT +0x110 (32-byte rows), PERF_STATE +0x920.
  */
+#ifndef SAGIT
 static void gold_cpufreq_max(void)
 {
 	uintptr_t b = 0x0f523000;
@@ -264,6 +271,7 @@ static void gold_cpufreq_max(void)
 	__asm__ volatile("dsb sy" ::: "memory");
 	con_hex2("CPUFREQ", "old=", old, "mhz=", best_khz / 1000);
 }
+#endif
 
 static void __attribute__((noreturn)) gold_main(uint64_t dtb)
 {
@@ -283,7 +291,9 @@ static void __attribute__((noreturn)) gold_main(uint64_t dtb)
 		 */
 		test_gic();
 		gold_gicr_prepare();
+#ifndef SAGIT
 		gold_cpufreq_max();
+#endif
 		uint64_t gt = speed_ticks();
 		con_hex2("SPEED", "silver=", (uint32_t)silver_ticks, "gold=", (uint32_t)gt);
 		delay_ms(1000);

@@ -13,7 +13,11 @@
 #include "console.h"
 #include "ufs.h"
 
+#ifdef SAGIT
+#define UFS_BASE	0x01da4000UL	/* ufshc@1da4000, Mi 6 live FDT */
+#else
 #define UFS_BASE	0x04804000UL	/* ufshc@4804000, topaz live FDT */
+#endif
 
 #define REG_CAP		0x00
 #define REG_VER		0x08
