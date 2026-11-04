@@ -11,6 +11,16 @@ in ios-topaz. It does not contain a bootable iOS image yet.
 - GICv3: distributor `0x17a00000`, redistributor `0x17b00000`, stride `0x20000`.
 - UFS host: `0x1da4000`; active framebuffer reservation `0x9d400000`;
   panel `1080x1920`, command mode.
+- The MSM8998 downstream device tree places MDSS at `0x0c900000` and DSI0
+  at `0x0c994000`. The matching upstream MSM8998 description identifies the
+  display engine as DPU, so Pixel 1's MSM8996 MDP5 kickoff/pipe register writes
+  cannot be reused as Sagit's scanout implementation. Confirm the DSI0 `reg`
+  against the saved live FDT before mapping it in XNU.
+- The JDI R63452 panel has a separate initialization sequence (tear mode,
+  RGB888 format, 1080x1920 address window, brightness and display-on/sleep
+  commands). The Sailfish DCS helper's one-byte `0x51` brightness write is not
+  a verified Sagit backlight path; keep it disabled until the panel/backlight
+  wiring and command format are confirmed.
 - The early XNU CPU tree exposes only Gold cores, starting at MPIDR `0x100`.
 
 Values came from the connected Mi 6's live FDT and are not a generic MSM8998
@@ -62,6 +72,10 @@ compiled or boot-tested.
   still unimplemented; framebuffer writes may not appear on the command-mode panel.
 - The command-mode panel's update path has not been tested from the shim/XNU;
   a readable framebuffer address alone does not prove display updates work.
+- Pixel 1's `sweet_fbcon_kick` writes MSM8996 MDP5 VIG0/CTL0 registers and
+  uses its own DSI command helper. Reuse only the general frame-completion and
+  packet-queueing ideas after validating MSM8998 DSI register behavior; do not
+  transplant its MDP5 pipe, flush, mixer, or brightness assumptions.
 - Topaz-specific XNU drivers and match strings still need review. Leave
   unported touch, USB, Wi-Fi, GPU, battery and frequency drivers disabled.
 - Keep using `fastboot boot` during early bring-up. Do not flash boot partitions
