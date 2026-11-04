@@ -4,7 +4,7 @@
 
 - Active local branch: `sagit-port`, based on `topaz`. Latest committed change `b6a9e58` adds the initial Sagit ADT and shim board configuration.
 - Committed work adds an Android boot v0 packer and a `SAGIT=1` build path that preserves the stock header, ramdisk and appended Qualcomm DTBs.
-- Current uncommitted work adds a GitHub Actions job that builds the kernel on macOS, then the Sagit ADT/payload/shim Image on Ubuntu. It intentionally does not upload the handset's stock boot image. Patch 0951 gates Topaz's hard-coded MDP MMIO behind `sagit=1`.
+- Current uncommitted work updates the hosted bring-up boot args to disable unported Topaz touch, key/USB, battery, CPU-frequency, backlight, GPU and modem paths. Patch 0951 gates Topaz's hard-coded MDP MMIO behind `sagit=1`.
 - The Sagit ADT generator and boot v0 packer have Python syntax, round-trip and checksum checks. No cross-compiled shim/XNU image exists and nothing has been boot-tested on the Mi 6.
 - Hardware inputs: `work/sagit-live.dtb`; persistent handoff: `work/sagit-port-handoff.md`; board usage notes: `SAGIT_PORT.md`.
 - Next: validate the workflow on a fork/hosted runner, then review the MSM8998 command-mode display and remaining Topaz-specific XNU assumptions. The display update path is still unimplemented. Early device tests must continue using `fastboot boot`.

@@ -56,9 +56,10 @@ compiled or boot-tested.
 
 - The current Windows host has no AArch64 compiler. A hosted build job is still
   needed for both the shim and XNU.
-- The Sagit boot-arg disables Topaz's hard-coded MDP scanout registers. The
-  MSM8998 display update path is still unimplemented; framebuffer writes may
-  not appear on the command-mode panel.
+- The initial boot args disable unported Topaz touch, key/USB, battery,
+  CPU-frequency, backlight, GPU and modem paths. The Sagit boot-arg also disables
+  Topaz's hard-coded MDP scanout registers. The MSM8998 display update path is
+  still unimplemented; framebuffer writes may not appear on the command-mode panel.
 - The command-mode panel's update path has not been tested from the shim/XNU;
   a readable framebuffer address alone does not prove display updates work.
 - Topaz-specific XNU drivers and match strings still need review. Leave
