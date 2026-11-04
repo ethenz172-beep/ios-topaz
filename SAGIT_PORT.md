@@ -28,10 +28,11 @@ reference configuration.
 
 ## Hosted build path
 
-The `xnu.yml` workflow has a Sagit job on the `sagit-port` branch. Dispatch it
-with `MACHINE_CONFIG=SWEET` and `KERNEL_CONFIG=DEVELOPMENT`. It builds the
-kernel on macOS, then uses an Ubuntu runner for the Sagit ADT, payload and shim
-Image. The artifact contains no handset boot image or device dump.
+The `xnu.yml` workflow has a Sagit job on the `sagit-port` branch. Run
+41844858240 completed successfully: both the XNU build and `sagit-bringup`
+jobs passed. The artifact contains the Sagit ADT, payload and shim Image, but
+no handset boot image or device dump. Artifact SHA256 values were verified
+before packaging.
 
 After downloading the `sagit-bringup` artifact to Windows, create a temporary
 boot v0 image locally from the saved stock boot image:
@@ -42,6 +43,22 @@ python tools\pack_sagit_boot.py C:\path\to\backed-up\boot.img `
 ```
 
 Use `fastboot boot sagit-fastboot-boot.img` only. Do not use `fastboot flash`.
+The generated image was accepted by `fastboot boot` on a connected Mi 6
+(`product: sagit`); after 60 seconds the device was no longer visible to either
+ADB or fastboot. This confirms the bootloader handed off the image, but does
+not confirm that XNU reached a usable prompt or that the display is working.
+The user's screen photo subsequently confirmed visible XNU kernel output:
+the boot CPU came alive with SGI1 verified, `1/1 CPUs initialized`, and kernel
+subsystems continued initializing. No panic banner is visible. The last
+visible lines are in `m_processor_register` for CPU 0. The user confirmed the
+screen then stopped updating. CPU bring-up itself completed. `pset 0` is the
+scheduler's processor-set ID in that diagnostic, not an error code; the last
+printed line alone does not prove the kernel stopped inside that function. The
+exact wait or fault still needs a serial/KDP trace or additional boot logging.
+The `gPanicBase is still not initialized` message is expected for this build:
+patch 0004 defines `PLATFORM_PANIC_LOG_DISABLED`, so persistent panic-log
+storage is disabled. The phone has since returned to Android 8.0 and is again
+visible to ADB (`product:sagit`).
 
 ## Local build path
 
@@ -58,14 +75,20 @@ SAGIT=1 SAGIT_BOOT_TEMPLATE=/path/to/backed-up/boot.img ./shim/build.sh [payload
 ```
 
 `tools/pack_sagit_boot.py` preserves the stock header, ramdisk and appended
-Qualcomm DTBs while replacing the kernel Image. The script was round-trip
-checked with a synthetic arm64 Image; the Sagit shim itself has not been
-compiled or boot-tested.
+Qualcomm DTBs while replacing the kernel Image. The hosted Sagit shim was
+compiled and packaged; the first `fastboot boot` handoff succeeded, but no
+ADB/fastboot re-enumeration was seen within 60 seconds.
 
 ## Remaining blockers
 
-- The current Windows host has no AArch64 compiler. A hosted build job is still
-  needed for both the shim and XNU.
+- The screen stopped updating after early IOKit/CPU initialization, but no
+  panic banner or fault details were captured. The XNU console does not provide
+  Android ADB, and this payload has no serial/KDP capture configured. Add
+  later-stage breadcrumbs or capture a debugger trace before attributing the
+  stop to the last printed line.
+- The payload contains only the XNU kernel and ADT; no iOS root filesystem or
+  RAM disk is included. Reaching the normal BSD root-device wait is therefore
+  a later expected milestone, not a usable iOS boot.
 - The initial boot args disable unported Topaz touch, key/USB, battery,
   CPU-frequency, backlight, GPU and modem paths. The Sagit boot-arg also disables
   Topaz's hard-coded MDP scanout registers. The MSM8998 display update path is

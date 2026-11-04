@@ -2,12 +2,12 @@
 
 ## Current handoff: Mi 6 (`sagit`) local port branch
 
-- Active local branch: `sagit-port`, based on `topaz`. Latest committed change `b6a9e58` adds the initial Sagit ADT and shim board configuration.
-- Committed work adds an Android boot v0 packer and a `SAGIT=1` build path that preserves the stock header, ramdisk and appended Qualcomm DTBs.
-- Current uncommitted work updates the hosted bring-up boot args to disable unported Topaz touch, key/USB, battery, CPU-frequency, backlight, GPU and modem paths. Patch 0951 gates Topaz's hard-coded MDP MMIO behind `sagit=1`.
-- The Sagit ADT generator and boot v0 packer have Python syntax, round-trip and checksum checks. No cross-compiled shim/XNU image exists and nothing has been boot-tested on the Mi 6.
-- Hardware inputs: `work/sagit-live.dtb`; persistent handoff: `work/sagit-port-handoff.md`; board usage notes: `SAGIT_PORT.md`.
-- Next: validate the workflow on a fork/hosted runner, then review the MSM8998 command-mode display and remaining Topaz-specific XNU assumptions. The display update path is still unimplemented. Early device tests must continue using `fastboot boot`.
+- Active local branch: `sagit-port`, based on `topaz`. The fork branch has a successful hosted build at Actions run `41844858240` (XNU build + `sagit-bringup` jobs).
+- The downloaded artifact hashes match; `work/sagit-fastboot-boot.img` was generated from the saved stock v0 boot image and only used with `fastboot boot`.
+- Mi 6 (`sagit`) visibly entered XNU: boot CPU MPIDR `0x100` came alive, SGI1 verified, and `1/1 CPUs initialized` printed. The screen later stopped updating after a `ml_processor_register` diagnostic; there was no visible panic.
+- `pset 0` in that diagnostic is the scheduler processor-set ID, not an error code. `gPanicBase is still not initialized` is expected because patch 0004 defines `PLATFORM_PANIC_LOG_DISABLED`; neither line identifies the freeze cause.
+- The phone has returned to Android 8.0 and is visible over ADB (`product:sagit`). No partition was written. The payload has only XNU + ADT, with no iOS root filesystem/RAM disk, so it cannot reach an iOS desktop.
+- `SAGIT_PORT.md` is the detailed bring-up record. Next: add/enable diagnostics beyond the last visible kernel stage and make a later `fastboot boot` attempt; do not alter CPU topology based only on the `pset 0` line. The MSM8998 command-mode display update path remains unimplemented.
 
 ## Agent handoff / active work (2026-10-15, latest)
 
