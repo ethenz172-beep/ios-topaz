@@ -1,10 +1,5 @@
 --- a/iokit/Kernel/arm/SweetSurface.h
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -43,5 +43,6 @@ public:
- 	uint32_t                  wrapDelta;    /* wrapped client memory: where it starts in its first page */
- 	bool                      wrapped;      /* memory is a prepared range of a task (IOSurfaceWrapClient*) */
-+	bool                      gpuPool;      /* topaz GPU: memory from the GPU pool below 4 GiB (scanoutPhys = its address) */
- 
--	bool init() APPLE_KEXT_OVERRIDE { scanoutPhys = 0; scanoutSlot = -1; values = NULL; purgeable = 0; wrapDelta = 0; wrapped = false; return OSObject::init(); }
-+	bool init() APPLE_KEXT_OVERRIDE { scanoutPhys = 0; scanoutSlot = -1; values = NULL; purgeable = 0; wrapDelta = 0; wrapped = false; gpuPool = false; return OSObject::init(); }
- 	void free() APPLE_KEXT_OVERRIDE;
+@@ -40,1 +40,2 @@ public:
+ 	int                       scanoutSlot;  /* pool slot, -1 when not from the pool */
++	bool                      gpuPool;      /* topaz GPU pool surface marker */
