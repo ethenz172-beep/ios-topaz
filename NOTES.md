@@ -7,7 +7,9 @@
 - Mi 6 (`sagit`) visibly entered XNU: boot CPU MPIDR `0x100` came alive, SGI1 verified, and `1/1 CPUs initialized` printed. The screen later stopped updating after a `ml_processor_register` diagnostic; there was no visible panic.
 - `pset 0` in that diagnostic is the scheduler processor-set ID, not an error code. `gPanicBase is still not initialized` is expected because patch 0004 defines `PLATFORM_PANIC_LOG_DISABLED`; neither line identifies the freeze cause.
 - The phone has returned to Android 8.0 and is visible over ADB (`product:sagit`). No partition was written. The payload has only XNU + ADT, with no iOS root filesystem/RAM disk, so it cannot reach an iOS desktop.
-- `SAGIT_PORT.md` is the detailed bring-up record. Next: add/enable diagnostics beyond the last visible kernel stage and make a later `fastboot boot` attempt; do not alter CPU topology based only on the `pset 0` line. The MSM8998 command-mode display update path remains unimplemented.
+- iOS 16.7.16 IPSW `iPhone10,3,iPhone10,6_16.7.16_20H392_Restore.ipsw` is on `P:\` (SHA256 `ece1194f7e233e9109c5790a8d23a4564a10a254e15ec5b09978a343265568fb`). Extracted APFS components are in `P:\ios16-20H392\`.
+- A 16 GiB HFS+ root image was built at `P:\ios16-20H392\iosroot-hfsplus.img` (SHA256 `8fa7fd01429606c7d2c90886c5fd1e5581095f8da345dbe0c988c2ef69fc5f6b`). `fsck.hfsplus -f -n` reports it OK after the same Unicode-name repair pass used by `tools/mkiosroot.sh`. `fstool` 0.4.35 produced plain case-insensitive HFS+; an NFD+casefold scan found no path collisions, but this is not the case-sensitive HFSX image the script intends. The image has not been boot-tested or put on the phone.
+- `SAGIT_PORT.md` is the detailed bring-up record. Next: add/enable diagnostics beyond the last visible kernel stage, integrate the IPSW root into a temporary payload, then make a later `fastboot boot` attempt; do not alter CPU topology based only on the `pset 0` line. Do not write `userdata` until the exact destructive step is explicitly confirmed. The MSM8998 command-mode display update path remains unimplemented.
 
 ## Agent handoff / active work (2026-10-15, latest)
 

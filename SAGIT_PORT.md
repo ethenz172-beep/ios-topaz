@@ -79,6 +79,14 @@ Qualcomm DTBs while replacing the kernel Image. The hosted Sagit shim was
 compiled and packaged; the first `fastboot boot` handoff succeeded, but no
 ADB/fastboot re-enumeration was seen within 60 seconds.
 
+## iOS 16.7.16 source and root image
+
+- The user-provided iPhone X IPSW is `P:\iPhone10,3,iPhone10,6_16.7.16_20H392_Restore.ipsw`, SHA256 `ece1194f7e233e9109c5790a8d23a4564a10a254e15ec5b09978a343265568fb`. Its manifest is build `20H392`, board `D22AP`. This is an extraction source only; it must not be restored to the Mi 6.
+- APFS members `OS.dmg` (4,730,814,044 bytes), `SystemOS.dmg` (2,743,074,816 bytes), and `AppOS.dmg` (10,485,760 bytes) were extracted to `P:\ios16-20H392\`.
+- Experimental combined root image: `P:\ios16-20H392\iosroot-hfsplus.img`, 16 GiB, SHA256 `8fa7fd01429606c7d2c90886c5fd1e5581095f8da345dbe0c988c2ef69fc5f6b`. It includes the OS volume, both cryptexes, shared dyld cache links and the keybag/logd setup from `tools/mkiosroot.sh`.
+- Windows had WSL 2 but no Ubuntu distribution. Ubuntu 24.04 was imported into `P:\WSL\ios-sweet-rootfs`; APFS-FUSE was built from `sgan81/apfs-fuse` and `fstool` 0.4.35's x86_64 static release was SHA256-verified against the GitHub release API (`0ac6836e68876be814b93fd6d9cca26733b85ac989ab31621376c0af55a8a809`). WSL's stock kernel has neither `HFSPLUS_FS` nor `HFS_FS`, so the normal `mkiosroot.sh` mount path could not run. `fstool` directly wrote the HFS+ image instead. `fsck.hfsplus -f -n` reports the result OK after `fsck.hfsplus -f -y` normalized names; `fstool` can list `/sbin/launchd`, the shared cache and `/private/var/keybags/systembag.kb`.
+- Limitation: this `fstool` build emits plain case-insensitive HFS+, while `mkiosroot.sh` intends case-sensitive HFS+. A scan found no NFD+casefold name collisions, but the image is an experimental artifact and has not been boot-tested or integrated into a Sagit payload. No phone partition has been written.
+
 ## Remaining blockers
 
 - The screen stopped updating after early IOKit/CPU initialization, but no
@@ -86,9 +94,10 @@ ADB/fastboot re-enumeration was seen within 60 seconds.
   Android ADB, and this payload has no serial/KDP capture configured. Add
   later-stage breadcrumbs or capture a debugger trace before attributing the
   stop to the last printed line.
-- The payload contains only the XNU kernel and ADT; no iOS root filesystem or
-  RAM disk is included. Reaching the normal BSD root-device wait is therefore
-  a later expected milestone, not a usable iOS boot.
+- The current payload still contains only the XNU kernel and ADT; the separate
+  experimental HFS+ root image above has not been integrated. Reaching the
+  normal BSD root-device wait is therefore a later expected milestone, not a
+  usable iOS boot.
 - The initial boot args disable unported Topaz touch, key/USB, battery,
   CPU-frequency, backlight, GPU and modem paths. The Sagit boot-arg also disables
   Topaz's hard-coded MDP scanout registers. The MSM8998 display update path is
