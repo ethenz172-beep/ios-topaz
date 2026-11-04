@@ -1,5 +1,13 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Current handoff: Mi 6 (`sagit`) local port branch
+
+- Active local branch: `sagit-port`, based on `topaz`. Latest committed change `b6a9e58` adds the initial Sagit ADT and shim board configuration.
+- Current uncommitted work adds an Android boot v0 packer and a `SAGIT=1` build path that preserves the stock header, ramdisk and appended Qualcomm DTBs.
+- The Sagit ADT generator and boot v0 packer have Python syntax, round-trip and checksum checks. No cross-compiled shim/XNU image exists and nothing has been boot-tested on the Mi 6.
+- Hardware inputs: `work/sagit-live.dtb`; persistent handoff: `work/sagit-port-handoff.md`; board usage notes: `SAGIT_PORT.md`.
+- Next: make a hosted build path, then review the MSM8998 command-mode display and remaining Topaz-specific XNU assumptions. Early device tests must continue using `fastboot boot`.
+
 ## Agent handoff / active work (2026-10-15, latest)
 
 ### >>> UPDATE 2026-10-18 (read first, then the 10-17 handoff below) <<<
