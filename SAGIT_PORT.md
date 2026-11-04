@@ -85,7 +85,7 @@ ADB/fastboot re-enumeration was seen within 60 seconds.
 - APFS members `OS.dmg` (4,730,814,044 bytes), `SystemOS.dmg` (2,743,074,816 bytes), and `AppOS.dmg` (10,485,760 bytes) were extracted to `P:\ios16-20H392\`.
 - Experimental combined root image: `P:\ios16-20H392\iosroot-hfsplus.img`, 16 GiB, SHA256 `8fa7fd01429606c7d2c90886c5fd1e5581095f8da345dbe0c988c2ef69fc5f6b`. It includes the OS volume, both cryptexes, shared dyld cache links and the keybag/logd setup from `tools/mkiosroot.sh`.
 - Windows had WSL 2 but no Ubuntu distribution. Ubuntu 24.04 was imported into `P:\WSL\ios-sweet-rootfs`; APFS-FUSE was built from `sgan81/apfs-fuse` and `fstool` 0.4.35's x86_64 static release was SHA256-verified against the GitHub release API (`0ac6836e68876be814b93fd6d9cca26733b85ac989ab31621376c0af55a8a809`). WSL's stock kernel has neither `HFSPLUS_FS` nor `HFS_FS`, so the normal `mkiosroot.sh` mount path could not run. `fstool` directly wrote the HFS+ image instead. `fsck.hfsplus -f -n` reports the result OK after `fsck.hfsplus -f -y` normalized names; `fstool` can list `/sbin/launchd`, the shared cache and `/private/var/keybags/systembag.kb`.
-- Limitation: this `fstool` build emits plain case-insensitive HFS+, while `mkiosroot.sh` intends case-sensitive HFS+. A scan found no NFD+casefold name collisions, but the image is an experimental artifact and has not been boot-tested or integrated into a Sagit payload. No phone partition has been written.
+- Limitation: this `fstool` build emits plain case-insensitive HFS+, while `mkiosroot.sh` intends case-sensitive HFS+. A scan found no NFD+casefold name collisions. The image was later written to `userdata` as 35 fastboot sparse parts with user approval, but it has not been mounted by the Sagit XNU payload; Android user data was overwritten. Boot, bootloader and recovery partitions were not written by that operation.
 
 ## Remaining blockers
 
@@ -102,6 +102,11 @@ ADB/fastboot re-enumeration was seen within 60 seconds.
   CPU-frequency, backlight, GPU and modem paths. The Sagit boot-arg also disables
   Topaz's hard-coded MDP scanout registers. The MSM8998 display update path is
   still unimplemented; framebuffer writes may not appear on the command-mode panel.
+- Local diagnostic patch edits now initialize the early XNU screen logger from
+  `boot_args.Video`, align the bootstrap/final mappings to that framebuffer's
+  32 MiB block, and remove the pre-MMU fixed `0x9c000000` write. This should
+  restore the stage markers on Sagit's `0x9d400000` 1080x1920 splash area; the
+  patch series has not yet been applied against XNU or built by Actions.
 - The command-mode panel's update path has not been tested from the shim/XNU;
   a readable framebuffer address alone does not prove display updates work.
 - Pixel 1's `sweet_fbcon_kick` writes MSM8996 MDP5 VIG0/CTL0 registers and
@@ -115,4 +120,4 @@ ADB/fastboot re-enumeration was seen within 60 seconds.
 - Topaz-specific XNU drivers and match strings still need review. Leave
   unported touch, USB, Wi-Fi, GPU, battery and frequency drivers disabled.
 - Keep using `fastboot boot` during early bring-up. Do not flash boot partitions
-  or write an iOS root to userdata in this stage.
+  or write another image to userdata in this stage. The experimental HFS+ image is already there; the current kernel payload has no confirmed Sagit UFS/root integration, so it cannot use that volume yet.
