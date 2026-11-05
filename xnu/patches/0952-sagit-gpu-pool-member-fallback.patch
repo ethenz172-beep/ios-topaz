@@ -1,8 +1,5 @@
 --- a/iokit/Kernel/arm/SweetSurface.h
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -28,4 +28,5 @@
- class SweetSurface : public OSObject {
- 	OSDeclareDefaultStructors(SweetSurface);
- 
+@@ -31,1 +31,2 @@
  public:
 +	bool gpuPool = false; /* topaz GPU pool surface marker */
