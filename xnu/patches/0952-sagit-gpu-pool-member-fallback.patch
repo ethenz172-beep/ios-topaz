@@ -1,5 +1,8 @@
 --- a/iokit/Kernel/arm/SweetSurface.h
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -24,1 +24,2 @@ public:
- 	uint32_t cacheMode, planeCount, parentID;
+@@ -78,4 +78,5 @@
+ class SweetSurface : public OSObject {
+ 	OSDeclareDefaultStructors(SweetSurface);
+ 
+ public:
 +	bool gpuPool = false; /* topaz GPU pool surface marker */
