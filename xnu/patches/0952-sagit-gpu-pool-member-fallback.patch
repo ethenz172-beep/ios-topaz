@@ -1,5 +1,5 @@
 --- a/iokit/Kernel/arm/SweetSurface.h
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -40,1 +40,2 @@ public:
- 	int                       scanoutSlot;  /* pool slot, -1 when not from the pool */
-+	bool                      gpuPool;      /* topaz GPU pool surface marker */
+@@ -24,1 +24,2 @@ public:
+ 	uint32_t cacheMode, planeCount, parentID;
++	bool gpuPool = false; /* topaz GPU pool surface marker */
