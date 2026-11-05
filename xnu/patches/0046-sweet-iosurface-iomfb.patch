@@ -48,7 +48,7 @@
  bool
 --- /dev/null
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,66 @@
 +/*
 + * Built-in IOSurface for SWEET (see SweetSurface.cpp).
 + *
@@ -79,6 +79,7 @@
 +	OSDeclareDefaultStructors(SweetSurface);
 +
 +public:
++	bool gpuPool = false; /* topaz GPU pool surface marker */
 +	uint32_t id;
 +	uint32_t width, height, bytesPerRow, offset, pixelFormat, allocSize;
 +	uint16_t bytesPerElement;
