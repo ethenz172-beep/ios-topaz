@@ -1,6 +1,6 @@
 --- a/iokit/Kernel/arm/SweetSurface.h
 +++ b/iokit/Kernel/arm/SweetSurface.h
-@@ -78,4 +78,5 @@
+@@ -28,4 +28,5 @@
  class SweetSurface : public OSObject {
  	OSDeclareDefaultStructors(SweetSurface);
  
