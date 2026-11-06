@@ -93,14 +93,33 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/iokit/Kernel/IOStartIOKit.cpp b/iokit/Kernel/IOStartIOKit.cpp
 --- a/iokit/Kernel/IOStartIOKit.cpp
 +++ b/iokit/Kernel/IOStartIOKit.cpp
-@@ -79,15 +79,19 @@
+@@ -47,6 +47,7 @@
+ #include <IOKit/IOInterruptAccountingPrivate.h>
+ #include <IOKit/assert.h>
+ #include <sys/conf.h>
++#include <pexpert/pexpert.h>
+ 
+ #include "IOKitKernelInternal.h"
+ 
+@@ -79,15 +80,28 @@
  
  // RTC is not present on this target
  #ifndef BCM2837
-+	kprintf("SAGIT TIME: before IORTC wait (30s)\n");
- 	IOService::waitForService(
- 		IOService::resourceMatching("IORTC"), &t );
-+	kprintf("SAGIT TIME: after IORTC wait\n");
+-	IOService::waitForService(
+-		IOService::resourceMatching("IORTC"), &t );
++	int sagit = 0;
++	int sagit_rtc_wait = 0;
++	PE_parse_boot_argn("sagit", &sagit, sizeof(sagit));
++	PE_parse_boot_argn("sagitrtcwait", &sagit_rtc_wait, sizeof(sagit_rtc_wait));
++	/* Sagit has no adapted IORTC provider yet. Keep calendar initialization. */
++	if (sagit && !sagit_rtc_wait) {
++		kprintf("SAGIT TIME: no adapted RTC; skipping provider wait\n");
++	} else {
++		kprintf("SAGIT TIME: before IORTC wait (30s)\n");
++		IOService::waitForService(
++			IOService::resourceMatching("IORTC"), &t );
++		kprintf("SAGIT TIME: after IORTC wait\n");
++	}
  #endif
  #if defined(__i386__) || defined(__x86_64__)
  	IOService::waitForService(
