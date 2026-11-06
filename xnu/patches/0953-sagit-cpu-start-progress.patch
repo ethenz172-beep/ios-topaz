@@ -209,3 +209,32 @@ diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
  	*dev = su.bdev;
  	return 0;
  }
+diff --git a/bsd/sweet_hfs/core/hfs_vfsops.c b/bsd/sweet_hfs/core/hfs_vfsops.c
+--- a/bsd/sweet_hfs/core/hfs_vfsops.c
++++ b/bsd/sweet_hfs/core/hfs_vfsops.c
+@@ -1562,6 +1562,25 @@
+ 		}
+ 
+ 
++		/* Explicit read-only bring-up path for Sagit's clean imported root. */
++		int sagit = 0, sagit_hfs_ro = 0;
++		PE_parse_boot_argn("sagit", &sagit, sizeof(sagit));
++		PE_parse_boot_argn("sagithfsro", &sagit_hfs_ro, sizeof(sagit_hfs_ro));
++		if (sagit && sagit_hfs_ro) {
++			uint32_t attrs = SWAP_BE32(vhp->attributes);
++			if (!ronly || journal_replay_only ||
++			    !(attrs & kHFSVolumeUnmountedMask) ||
++			    (attrs & kHFSVolumeInconsistentMask)) {
++				printf("SAGIT HFS: refusing journal bypass, readonly=%d attrs=0x%x\n",
++				    ronly, attrs);
++				retval = EROFS;
++				goto error_exit;
++			}
++			/* In-memory header only; do not modify the on-disk volume. */
++			vhp->attributes = SWAP_BE32(attrs & ~kHFSVolumeJournaledMask);
++			printf("SAGIT HFS: clean read-only journal bypass, original attrs=0x%x\n", attrs);
++		}
++
+ 		// XXXdbg
+ 		//
+ 		hfsmp->jnl = NULL;
