@@ -56,6 +56,7 @@ jobs:
           git -C dxb checkout -q FETCH_HEAD
           # 12.5-14.3 use the top-level patches dir; ours go next to blacktop's
           cp xnu/patches/*.patch xnu/patches/*.sh dxb/patches/
+          python3 tools/check_xnu_build.py guard-patches dxb/build.sh xnu/patches
           # libfirehose_kernel is built arm64e-only; the SWEET kernel is plain arm64.
           # topaz: Cortex-A53/A73 (ARMv8.0), so the same -mcpu as the kernel
           # (clang's apple-m1 default emits LSE atomics and LDAPR)
@@ -105,6 +106,13 @@ jobs:
           ccache -z
           bash build.sh
           ccache -s
+
+      - name: Verify linked SWEET CPU diagnostics
+        if: env.MACHINE_CONFIG == 'SWEET'
+        run: |
+          kernel_config=$(printf '%s' "$KERNEL_CONFIG" | tr '[:upper:]' '[:lower:]')
+          python3 tools/check_xnu_build.py verify-kernel \
+            "dxb/fakeroot/System/Library/Kernels/kernel.$kernel_config.sweet"
 
       - name: Package build tree for local compiles
         if: always()
@@ -188,7 +196,7 @@ jobs:
           mkdir -p shim/out
           python3 tools/mkadt.py shim/out/sagit.adt --sagit
           python3 tools/mkpayload.py "$kernel" shim/out/sagit.adt shim/out/payload.bin \
-            --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress sagit=1 sweettouch=0 sweethw=0 sweetbattery=0 sweetcpufreq=0 sweetbl=0 gpu=0 modem=0'
+            --cmdline 'debug=0xc serial=3 cpus=1 keepsyms=1 startup_debug=1 -enable_kprintf_spam -noprogress sagit=1 sweettouch=0 sweethw=0 sweetbattery=0 sweetcpufreq=0 sweetbl=0 gpu=0 modem=0'
           SAGIT=1 ./shim/build.sh out/payload.bin
           sha256sum shim/out/sagit-shim.Image shim/out/sagit.adt shim/out/payload.bin > shim/out/SHA256SUMS
 
