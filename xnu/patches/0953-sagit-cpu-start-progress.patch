@@ -90,3 +90,26 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
  
  #if DEBUG_BSDINIT
  #define bsd_init_kprintf(x, ...) kprintf("bsd_init: " x, ## __VA_ARGS__)
+diff --git a/iokit/Kernel/IOStartIOKit.cpp b/iokit/Kernel/IOStartIOKit.cpp
+--- a/iokit/Kernel/IOStartIOKit.cpp
++++ b/iokit/Kernel/IOStartIOKit.cpp
+@@ -79,15 +79,19 @@
+ 
+ // RTC is not present on this target
+ #ifndef BCM2837
++	kprintf("SAGIT TIME: before IORTC wait (30s)\n");
+ 	IOService::waitForService(
+ 		IOService::resourceMatching("IORTC"), &t );
++	kprintf("SAGIT TIME: after IORTC wait\n");
+ #endif
+ #if defined(__i386__) || defined(__x86_64__)
+ 	IOService::waitForService(
+ 		IOService::resourceMatching("IONVRAM"), &t );
+ #endif
+ 
++	kprintf("SAGIT TIME: before clock_initialize_calendar\n");
+ 	clock_initialize_calendar();
++	kprintf("SAGIT TIME: after clock_initialize_calendar\n");
+ }
+ 
+ void
