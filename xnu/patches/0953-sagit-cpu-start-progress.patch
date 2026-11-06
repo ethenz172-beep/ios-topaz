@@ -327,3 +327,41 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
  	sweet_early_mark(18, "fbcon mapping returned");
  	if (fbcon_base != NULL) {
  		register_serial_functions(&sweet_fbcon_serial_functions);
+diff --git a/bsd/kern/kern_exec.c b/bsd/kern/kern_exec.c
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -6874,6 +6874,8 @@
+ load_init_program(proc_t p)
+ {
++	kprintf("SAGIT EXEC: load_init_program entered\n");
++
+ 	uint32_t i;
+ 	int error;
+ 	vm_map_t map = current_map();
+ 	mach_vm_offset_t scratch_addr = 0;
+@@ -6882,7 +6884,9 @@
+ 
++	kprintf("SAGIT EXEC: before scratch allocation\n");
+ 	(void) mach_vm_allocate_kernel(map, &scratch_addr, map_page_size, VM_FLAGS_ANYWHERE, VM_KERN_MEMORY_NONE);
++	kprintf("SAGIT EXEC: after scratch allocation\n");
+ #if CONFIG_MEMORYSTATUS
+ 	(void) memorystatus_init_at_boot_snapshot();
+ #endif /* CONFIG_MEMORYSTATUS */
+ 
+ #if DEBUG || DEVELOPMENT
+diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
+--- a/pexpert/arm/pe_serial.c
++++ b/pexpert/arm/pe_serial.c
+@@ -752,6 +752,12 @@
+ fbcon_init(void)
+ {
++	/* Remove status pixels retained from an earlier temporary boot. */
++	for (uint32_t y = 0; y < fbcon_height; y++) {
++		for (uint32_t x = fbcon_status_x; x < fbcon_status_x + 32; x++) {
++			fbcon_base[y * (fbcon_stride / 4) + x] = FBCON_BG;
++		}
++	}
+ 	fbcon_cols = fbcon_width / (8 * FBCON_SCALE);
+ 	fbcon_rows = fbcon_height / (16 * FBCON_SCALE);
+ 	fbcon_col = fbcon_row = 0;
+ 	for (uint32_t r = 0; r < fbcon_rows; r++) {
