@@ -241,31 +241,89 @@ diff --git a/bsd/sweet_hfs/core/hfs_vfsops.c b/bsd/sweet_hfs/core/hfs_vfsops.c
 diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 --- a/bsd/kern/bsd_init.c
 +++ b/bsd/kern/bsd_init.c
-@@ -1075,6 +1075,7 @@
+@@ -1075,6 +1075,9 @@
  void
  bsdinit_task(void)
  {
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(1);
 +	kprintf("SAGIT USER: bsdinit_task entered\n");
  	proc_t p = current_proc();
  
  	process_name("init", p);
-@@ -1086,7 +1087,9 @@
+@@ -1086,7 +1089,11 @@
  	mac_cred_label_associate_user(proc_ucred(p));
  #endif
  
++	sweet_fbcon_stage(2);
 +	kprintf("SAGIT USER: before vm_init_before_launchd\n");
  	vm_init_before_launchd();
 +	kprintf("SAGIT USER: after vm_init_before_launchd\n");
++	sweet_fbcon_stage(3);
  
  #if CONFIG_XNUPOST
  	int result = bsd_list_tests();
-@@ -1098,7 +1101,9 @@
+@@ -1098,7 +1105,11 @@
  
  	bsd_init_kprintf("bsd_do_post - done");
  
++	sweet_fbcon_stage(4);
 +	kprintf("SAGIT USER: before load_init_program\n");
  	load_init_program(p);
 +	kprintf("SAGIT USER: after load_init_program\n");
++	sweet_fbcon_stage(5);
  	lock_trace = 1;
  }
  
+diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
+--- a/pexpert/arm/pe_serial.c
++++ b/pexpert/arm/pe_serial.c
+@@ -719,8 +719,33 @@
+ 
+ static volatile uint32_t *fbcon_base;
+ static uint32_t fbcon_width, fbcon_height, fbcon_stride;
++static uint32_t fbcon_status_x;
+ static uint32_t fbcon_cols, fbcon_rows, fbcon_col, fbcon_row;
+ 
++/*
++ * Persistent Sagit bring-up indicator.  The framebuffer console clears only
++ * fbcon_width pixels, leaving this right-hand stripe outside the scrolling
++ * text area.  Successive user-bootstrap stages replace its solid colour.
++ */
++void
++sweet_fbcon_stage(unsigned int stage)
++{
++	static const uint32_t colors[] = {
++		0xff000000u, 0xffff0000u, 0xffff8000u,
++		0xffffff00u, 0xff00ff00u, 0xff00ffffu
++	};
++	if (fbcon_base == NULL || fbcon_status_x == 0) {
++		return;
++	}
++	uint32_t color = colors[stage < 6 ? stage : 0];
++	for (uint32_t y = 0; y < fbcon_height; y++) {
++		volatile uint32_t *line = fbcon_base + y * (fbcon_stride / 4);
++		for (uint32_t x = fbcon_status_x; x < fbcon_status_x + 32; x++) {
++			line[x] = color;
++		}
++	}
++}
++
+ static void
+ fbcon_clear_row(uint32_t row)
+ {
+@@ -832,11 +857,13 @@
+ 	if (SecureDTGetProperty(entry, "stride", (void const **)&val, &size) == kSuccess) {
+ 		fbcon_stride = *val;
+ 	}
+-	if (!fbcon_width || !fbcon_height || fbcon_stride < fbcon_width * 4) {
++	if (fbcon_width <= 32 || !fbcon_height || fbcon_stride < fbcon_width * 4) {
+ 		return;
+ 	}
++	fbcon_status_x = fbcon_width - 32;
++	fbcon_width = fbcon_status_x;
+ 	sweet_early_mark(17, "fbcon config read; mapping");
+ 	fbcon_base = (volatile uint32_t *)ml_io_map_wcomb(reg[0], reg[1]);
+ 	sweet_early_mark(18, "fbcon mapping returned");
+ 	if (fbcon_base != NULL) {
+ 		register_serial_functions(&sweet_fbcon_serial_functions);
