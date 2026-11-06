@@ -55,7 +55,23 @@ jobs:
           git -C dxb fetch -q --depth 1 "$DXB_REPO" "$DXB_SHA"
           git -C dxb checkout -q FETCH_HEAD
           # 12.5-14.3 use the top-level patches dir; ours go next to blacktop's
-          cp xnu/patches/*.patch xnu/patches/*.sh dxb/patches/
+          cp xnu/patches/*.sh dxb/patches/
+          for patch in xnu/patches/*.patch; do
+            name=$(basename "$patch")
+            if [ "$GITHUB_REF_NAME" = sagit-port ]; then
+              # Sagit stays on 16K Gold cores with the base software display.
+              # Topaz 4K/AMP experiments and its GPU/radio stack are not ported.
+              case "$name" in
+                014[0-2]-*) echo "Excluded Topaz 4K experiment: $name"; continue ;;
+                09*)
+                  case "$name" in
+                    0951-*|0953-*) ;;
+                    *) echo "Excluded unported Topaz stack: $name"; continue ;;
+                  esac ;;
+              esac
+            fi
+            cp "$patch" dxb/patches/
+          done
           python3 tools/check_xnu_build.py guard-patches dxb/build.sh xnu/patches
           # libfirehose_kernel is built arm64e-only; the SWEET kernel is plain arm64.
           # topaz: Cortex-A53/A73 (ARMv8.0), so the same -mcpu as the kernel
