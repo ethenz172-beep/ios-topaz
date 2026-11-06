@@ -400,7 +400,7 @@ diff --git a/bsd/kern/kern_sig.c b/bsd/kern/kern_sig.c
  	static int bsd_init_done = 0;
  
 +	if (!bsd_init_done) {
-+		kprintf("SAGIT TASK: first bsd_ast entered\n");
++		printf("SAGIT TASK: first bsd_ast entered\n");
 +	}
  	if (p == NULL) {
  		return;
@@ -408,7 +408,7 @@ diff --git a/bsd/kern/kern_sig.c b/bsd/kern/kern_sig.c
 @@ -3402,6 +3405,7 @@
  	if (!bsd_init_done) {
  		bsd_init_done = 1;
-+		kprintf("SAGIT TASK: bsd_ast calling bsdinit_task\n");
++		printf("SAGIT TASK: bsd_ast calling bsdinit_task\n");
  		bsdinit_task();
  	}
  }
