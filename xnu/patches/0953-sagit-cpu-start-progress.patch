@@ -34,3 +34,47 @@ diff --git a/iokit/Kernel/arm/SweetCPU.cpp b/iokit/Kernel/arm/SweetCPU.cpp
  	IOLog("SWEET CPU: %u/%u CPUs initialized, SGI1 verified\n",
  	    topology->num_cpus, topology->num_cpus);
  	thread_terminate(current_thread());
+diff --git a/pexpert/arm/pe_init.c b/pexpert/arm/pe_init.c
+--- a/pexpert/arm/pe_init.c
++++ b/pexpert/arm/pe_init.c
+@@ -378,8 +378,11 @@
+ 	 * against a kernel which has not yet enabled the full set of available
+ 	 * hardware protections.
+ 	 */
++	kprintf("SAGIT BOOT: before zalloc_iokit_lockdown\n");
+ 	zalloc_iokit_lockdown();
++	kprintf("SAGIT BOOT: before StartIOKitMatching\n");
+ 	StartIOKitMatching();
++	kprintf("SAGIT BOOT: after StartIOKitMatching\n");
+ }
+ 
+ void
+diff --git a/osfmk/kern/startup.c b/osfmk/kern/startup.c
+--- a/osfmk/kern/startup.c
++++ b/osfmk/kern/startup.c
+@@ -771,12 +771,15 @@
+ #ifdef  IOKIT
+ 	kernel_bootstrap_log("PE_lockdown_iokit");
+ 	PE_lockdown_iokit();
++	kprintf("SAGIT BOOT: PE_lockdown_iokit returned\n");
+ #endif
+ 	/*
+ 	 * max_cpus must be nailed down by the time PE_lockdown_iokit() finishes,
+ 	 * at the latest
+ 	 */
++	kprintf("SAGIT BOOT: before vm_set_restrictions cpus=%u\n", machine_info.max_cpus);
+ 	vm_set_restrictions(machine_info.max_cpus);
++	kprintf("SAGIT BOOT: after vm_set_restrictions\n");
+ 
+ 
+ #if KPERF
+@@ -787,7 +790,9 @@
+ 	 *	Start the user bootstrap.
+ 	 */
+ #ifdef  MACH_BSD
++	kprintf("SAGIT BOOT: before bsd_init\n");
+ 	bsd_init();
++	kprintf("SAGIT BOOT: after bsd_init\n");
+ #endif
+ 
+ 
