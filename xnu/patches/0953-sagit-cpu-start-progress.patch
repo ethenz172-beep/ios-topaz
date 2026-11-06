@@ -365,3 +365,51 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
  	fbcon_rows = fbcon_height / (16 * FBCON_SCALE);
  	fbcon_col = fbcon_row = 0;
  	for (uint32_t r = 0; r < fbcon_rows; r++) {
+diff --git a/osfmk/kern/task.c b/osfmk/kern/task.c
+--- a/osfmk/kern/task.c
++++ b/osfmk/kern/task.c
+@@ -787,6 +787,7 @@
+ task_wait_to_return(void)
+ {
++	kprintf("SAGIT TASK: task_wait_to_return entered\n");
+ 	task_t task = current_task();
+ 
+ 	is_write_lock(task->itk_space);
+ 
+@@ -818,6 +819,7 @@
+ 	is_write_unlock(task->itk_space);
+ 	turnstile_cleanup();
++	kprintf("SAGIT TASK: return wait cleared\n");
+ 
+ 
+ #if CONFIG_MACF
+ 	/*
+@@ -830,6 +832,7 @@
+ 	mach_kauth_cred_thread_update();
+ 	mac_proc_notify_exec_complete(current_proc());
+ #endif
+ 
++	kprintf("SAGIT TASK: before thread_bootstrap_return\n");
+ 	thread_bootstrap_return();
+ }
+diff --git a/bsd/kern/kern_sig.c b/bsd/kern/kern_sig.c
+--- a/bsd/kern/kern_sig.c
++++ b/bsd/kern/kern_sig.c
+@@ -3301,6 +3301,9 @@
+ 	int     signum;
+ 	static int bsd_init_done = 0;
+ 
++	if (!bsd_init_done) {
++		kprintf("SAGIT TASK: first bsd_ast entered\n");
++	}
+ 	if (p == NULL) {
+ 		return;
+ 	}
+@@ -3402,6 +3405,7 @@
+ 	if (!bsd_init_done) {
+ 		bsd_init_done = 1;
++		kprintf("SAGIT TASK: bsd_ast calling bsdinit_task\n");
+ 		bsdinit_task();
+ 	}
+ }
+ 
