@@ -288,7 +288,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +/*
 + * Persistent Sagit bring-up indicator.  The framebuffer console clears only
 + * fbcon_width pixels, leaving this right-hand stripe outside the scrolling
-+ * text area.  Successive user-bootstrap stages replace its solid colour.
++ * text area.  Draw only 32 scanlines to bound the diagnostic write cost.
 + */
 +void
 +sweet_fbcon_stage(unsigned int stage)
@@ -301,7 +301,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		return;
 +	}
 +	uint32_t color = colors[stage < 6 ? stage : 0];
-+	for (uint32_t y = 0; y < fbcon_height; y++) {
++	for (uint32_t y = 0; y < fbcon_height && y < 32; y++) {
 +		volatile uint32_t *line = fbcon_base + y * (fbcon_stride / 4);
 +		for (uint32_t x = fbcon_status_x; x < fbcon_status_x + 32; x++) {
 +			line[x] = color;
