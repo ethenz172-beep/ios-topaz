@@ -132,3 +132,80 @@ diff --git a/iokit/Kernel/IOStartIOKit.cpp b/iokit/Kernel/IOStartIOKit.cpp
  }
  
  void
+diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1131,7 +1131,10 @@
+ 	u_int32_t       flags;
+ 	kern_return_t   err;
+ 
++	kprintf("SAGIT ROOT: before IOFindBSDRoot\n");
+ 	err = IOFindBSDRoot(rootdevice, sizeof(rootdevice), &rootdev, &flags);
++	kprintf("SAGIT ROOT: IOFindBSDRoot error=%d device=%s major=%d minor=%d\n",
++	    err, rootdevice, major(rootdev), minor(rootdev));
+ 	if (err) {
+ 		printf("setconf: IOFindBSDRoot returned an error (%d);"
+ 		    "setting rootdevice to 'sd0a'.\n", err);     /* XXX DEBUG TEMP */
+diff --git a/bsd/vfs/vfs_subr.c b/bsd/vfs/vfs_subr.c
+--- a/bsd/vfs/vfs_subr.c
++++ b/bsd/vfs/vfs_subr.c
+@@ -1237,6 +1237,7 @@
+ 		KDBG_RELEASE(DBG_MOUNTROOT | DBG_FUNC_END, error, 0);
+ 		return error;
+ 	}
++	printf("SAGIT ROOT: before bdevvp major=%d minor=%d\n", major(rootdev), minor(rootdev));
+ 	if ((error = bdevvp(rootdev, &rootvp))) {
+ 		printf("vfs_mountroot: can't setup bdevvp\n");
+ 
+@@ -1247,6 +1248,7 @@
+ 	 * 4951998 - code we call in vfc_mountroot may replace rootvp
+ 	 * so keep a local copy for some house keeping.
+ 	 */
++	printf("SAGIT ROOT: bdevvp returned\n");
+ 	bdevvp_rootvp = rootvp;
+ 
+ 	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
+@@ -1255,7 +1257,9 @@
+ 			continue;
+ 		}
+ 
++		printf("SAGIT ROOT: allocating mount for %s\n", vfsp->vfc_name);
+ 		mp = vfs_rootmountalloc_internal(vfsp, "root_device");
++		printf("SAGIT ROOT: mount allocated for %s\n", vfsp->vfc_name);
+ 		mp->mnt_devvp = rootvp;
+ #if defined(ARM64_BOARD_CONFIG_SWEET)
+ 		/*
+@@ -1270,12 +1274,14 @@
+ 		}
+ #endif
+ 
++		printf("SAGIT ROOT: calling filesystem %s\n", vfsp->vfc_name);
+ 		if (vfsp->vfc_mountroot) {
+ 			error = (*vfsp->vfc_mountroot)(mp, rootvp, ctx);
+ 		} else {
+ 			error = VFS_MOUNT(mp, rootvp, 0, ctx);
+ 		}
+ 
++		printf("SAGIT ROOT: filesystem %s returned %d\n", vfsp->vfc_name, error);
+ 		if (!error) {
+ 			if (bdevvp_rootvp != rootvp) {
+ 				/*
+diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -979,12 +979,15 @@
+ int
+ sweet_ufs_rootdev(dev_t *dev)
+ {
++	printf("SAGIT ROOT: UFS rootdev entered\n");
+ 	if (!su.ready) {
+ 		int error = sweet_ufs_init();
++		printf("SAGIT ROOT: UFS init returned %d\n", error);
+ 		if (error) {
+ 			return error;
+ 		}
+ 	}
++	printf("SAGIT ROOT: UFS rootdev ready\n");
+ 	*dev = su.bdev;
+ 	return 0;
+ }
