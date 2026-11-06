@@ -1,0 +1,36 @@
+diff --git a/iokit/Kernel/arm/SweetCPU.cpp b/iokit/Kernel/arm/SweetCPU.cpp
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -99,7 +99,10 @@
+ 	info.l3_cache_id = cpu->l3_cache_id;
+ 	info.l3_cache_size = cpu->l3_cache_size;
+ 	perfmon_interrupt_handler_func pmi_handler = NULL;
++	IOLog("SWEET CPU: before ml_processor_register phys=0x%x log=%u cluster=%u\n",
++	    info.phys_id, info.log_id, info.cluster_id);
+ 	kern_return_t result = ml_processor_register(&info, &machProcessor, &ipi_handler, &pmi_handler);
++	IOLog("SWEET CPU: after ml_processor_register result=%d\n", result);
+ 	if (result != KERN_SUCCESS) {
+ 		panic("SWEET CPU: ml_processor_register failed: %d", result);
+ 	}
+@@ -154,7 +157,11 @@
+ 	}
+ 	for (unsigned int i = 0; i < topology->num_cpus; i++) {
+ 		SweetCPU *cpu = __atomic_load_n(&sweet_cpus[i], __ATOMIC_ACQUIRE);
++		IOLog("SWEET CPU: before processor_start log=%u phys=0x%x\n",
++		    i, topology->cpus[i].phys_id);
+ 		kern_return_t kr = processor_start(cpu->machProcessor);
++		IOLog("SWEET CPU: after processor_start log=%u result=%d state=%d\n",
++		    i, kr, cpu->getCPUState());
+ 		if (kr != KERN_SUCCESS) {
+ 			panic("SWEET CPU: cpu=%u processor_start failed: %d", i, kr);
+ 		}
+@@ -176,7 +183,9 @@
+ 	ml_cpu_init_completed();
+ 	__atomic_load_n(&sweet_cpus[topology->boot_cpu->cpu_id], __ATOMIC_ACQUIRE)->cpusRunning();
+ 	IOService::publishResource(gIOAllCPUInitializedKey, kOSBooleanTrue);
++	IOLog("SWEET CPU: before ml_set_max_cpus count=%u\n", topology->max_cpu_id + 1);
+ 	ml_set_max_cpus(topology->max_cpu_id + 1);
++	IOLog("SWEET CPU: after ml_set_max_cpus\n");
+ 	IOLog("SWEET CPU: %u/%u CPUs initialized, SGI1 verified\n",
+ 	    topology->num_cpus, topology->num_cpus);
+ 	thread_terminate(current_thread());

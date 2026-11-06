@@ -1,7 +1,8 @@
 diff --git a/iokit/Kernel/arm/SweetCPU.cpp b/iokit/Kernel/arm/SweetCPU.cpp
 new file mode 100644
---- /dev/null+++ b/iokit/Kernel/arm/SweetCPU.cpp
-@@ -0,0 +1,176 @@
+--- /dev/null
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -0,0 +1,171 @@
 +/*
 + * Single-CPU bring-up for sweet using XNU's legacy IOCPU interface.
 + * The architected timer and SGI1 already enter through pe_fiq/sleh_irq.
@@ -73,9 +74,7 @@ new file mode 100644
 +	info.l3_cache_id = cpu->l3_cache_id;
 +	info.l3_cache_size = cpu->l3_cache_size;
 +	perfmon_interrupt_handler_func pmi_handler = NULL;
-+	IOLog("SWEET CPU: before ml_processor_register phys=%u log=%u cluster=%u\n", info.phys_id, info.log_id, info.cluster_id);
-+    kern_return_t result = ml_processor_register(&info, &machProcessor, &ipi_handler, &pmi_handler);
-+    IOLog("SWEET CPU: after ml_processor_register result=%d\n", result);
++	kern_return_t result = ml_processor_register(&info, &machProcessor, &ipi_handler, &pmi_handler);
 +	if (result != KERN_SUCCESS) {
 +		panic("SWEET CPU: ml_processor_register failed: %d", result);
 +	}
@@ -84,9 +83,7 @@ new file mode 100644
 +	}
 +
 +	/* Re-enter the boot CPU through cpu_machine_init -> PE_cpu_machine_init. */
-+	IOLog("SWEET CPU: before processor_start\n");
-+    result = processor_start(machProcessor);
-+    IOLog("SWEET CPU: after processor_start result=%d state=%d\n", result, getCPUState());
++	result = processor_start(machProcessor);
 +	if (result != KERN_SUCCESS || getCPUState() != kIOCPUStateRunning) {
 +		panic("SWEET CPU: processor_start failed: %d", result);
 +	}
