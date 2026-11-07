@@ -306,7 +306,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 14) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 17) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -377,6 +377,21 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 diff --git a/osfmk/kern/task.c b/osfmk/kern/task.c
 --- a/osfmk/kern/task.c
 +++ b/osfmk/kern/task.c
+@@ -756,7 +756,13 @@
+ task_clear_return_wait(task_t task, uint32_t flags)
+ {
+ 	if (flags & TCRW_CLEAR_INITIAL_WAIT) {
+-		thread_wakeup(task_get_return_wait_event(task));
++		kern_return_t wake_result = thread_wakeup(task_get_return_wait_event(task));
++		void *proc = get_bsdtask_info(task);
++		if (proc != NULL && proc_pid(proc) == 1) {
++			extern void sweet_fbcon_stage(unsigned int stage);
++			sweet_fbcon_stage(wake_result == KERN_SUCCESS ? 15 : 16);
++			kprintf("SAGIT TASK: pid1 initial wake result=%d\n", wake_result);
++		}
+ 	}
+ 
+ 	if (flags & TCRW_CLEAR_FINAL_WAIT) {
 @@ -787,6 +787,9 @@
  task_wait_to_return(void)
  {
@@ -449,4 +464,17 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +			}
 +		}
 +	}
+ }
+diff --git a/osfmk/kern/startup.c b/osfmk/kern/startup.c
+--- a/osfmk/kern/startup.c
++++ b/osfmk/kern/startup.c
+@@ -812,6 +812,9 @@
+ 	/*
+ 	 *	Become the pageout daemon.
+ 	 */
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(17);
++	kprintf("SAGIT TASK: bootstrap entering vm_pageout\n");
+ 	vm_pageout();
+ 	/*NOTREACHED*/
  }
