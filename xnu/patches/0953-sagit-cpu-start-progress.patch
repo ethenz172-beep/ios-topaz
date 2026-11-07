@@ -497,13 +497,30 @@ diff --git a/osfmk/vm/vm_pageout.c b/osfmk/vm/vm_pageout.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -2946,6 +2946,11 @@
+@@ -2936,6 +2936,9 @@
++/* CPU 0 owns this one-shot diagnostic budget with interrupts masked. */
++static unsigned int sagit_dispatch_samples;
++
+ static boolean_t
+ thread_invoke(
+ 	thread_t                        self,
+ 	thread_t                        thread,
+ 	ast_t                           reason)
+ {
+@@ -2946,6 +2949,18 @@
  		    pl, (pl < 0 ? "unlocking an unlocked mutex or spinlock" :
  		    "blocking while holding a spinlock, or within interrupt context"));
  	}
 +	if (thread != self && thread->continuation == (thread_continue_t)task_wait_to_return) {
 +		extern void sweet_fbcon_stage(unsigned int stage);
 +		sweet_fbcon_stage(19);
++	}
++	if (thread != self && current_processor()->cpu_id == 0 && sagit_dispatch_samples != 0) {
++		sagit_dispatch_samples--;
++		kprintf("SAGIT DISPATCH: tid=%llu pri=%d cont=0x%llx kernel=%d\n",
++		    (unsigned long long)thread_tid(thread), thread->sched_pri,
++		    (unsigned long long)VM_KERNEL_UNSLIDE(thread->continuation),
++		    get_threadtask(thread) == kernel_task);
 +	}
 +
  
@@ -553,13 +570,13 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,24 @@
+@@ -3833,7 +3833,25 @@
  	}
  
 +	extern void vm_pageout_continue(void);
 +	extern void sweet_fbcon_stage(unsigned int stage);
 +	static bool pageout_selection_sampled;
-+	bool trace_pageout = !pageout_selection_sampled &&
++	bool trace_pageout = processor->cpu_id == 0 && !pageout_selection_sampled &&
 +	    continuation == (thread_continue_t)vm_pageout_continue;
 +	if (trace_pageout) {
 +		pageout_selection_sampled = true;
@@ -572,6 +589,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +		if (trace_pageout) {
 +			trace_pageout = false;
 +			sweet_fbcon_stage(21);
++			sagit_dispatch_samples = 6;
 +			kprintf("SAGIT TASK: pageout select idle=%d self=%d init_cont=%d pri=%d recommended=%d\n",
 +			    new_thread == processor->idle_thread, new_thread == self,
 +			    new_thread->continuation == (thread_continue_t)task_wait_to_return,
