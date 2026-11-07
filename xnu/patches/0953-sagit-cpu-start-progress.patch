@@ -526,12 +526,20 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
  
  	thread_continue_t       continuation = self->continuation;
  	void                    *parameter   = self->parameter;
-@@ -5617,6 +5622,25 @@
+@@ -102,6 +102,7 @@
+ #include <kern/sfi.h>
+ #include <kern/syscall_subr.h>
+ #include <kern/task.h>
+ #include <kern/thread.h>
++#include <kern/thread_call.h>
+ #include <kern/thread_group.h>
+ #include <kern/ledger.h>
+@@ -5617,6 +5622,45 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
 +
-+void
-+sagit_trace_bootstrap_runq(thread_t thread)
++static void
++sagit_log_bootstrap_runq(thread_t thread, const char *phase)
 +{
 +	spl_t s = splsched();
 +	thread_lock(thread);
@@ -541,9 +549,29 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	processor_t chosen = thread->chosen_processor;
 +	thread_unlock(thread);
 +	splx(s);
-+	kprintf("SAGIT TASK: pid1 state=0x%x pri=%d runq=%d chosen=%d\n",
++	kprintf("SAGIT TASK: pid1 state=0x%x pri=%d runq=%d chosen=%d phase=%s\n",
 +	    state, priority, runq ? (int)runq->cpu_id : -1,
-+	    chosen ? (int)chosen->cpu_id : -1);
++	    chosen ? (int)chosen->cpu_id : -1, phase);
++}
++
++static void
++sagit_delayed_pid1_sample(thread_call_param_t param, __unused thread_call_param_t unused)
++{
++	thread_t thread = (thread_t)param;
++	sagit_log_bootstrap_runq(thread, "late");
++	thread_deallocate(thread);
++}
++
++void
++sagit_trace_bootstrap_runq(thread_t thread)
++{
++	static thread_call_data_t sample;
++	uint64_t deadline;
++	sagit_log_bootstrap_runq(thread, "wake");
++	thread_reference(thread);
++	thread_call_setup(&sample, sagit_delayed_pid1_sample, thread);
++	clock_interval_to_deadline(2, NSEC_PER_SEC, &deadline);
++	thread_call_enter_delayed(&sample, deadline);
 +}
 +
  void
