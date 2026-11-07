@@ -68,12 +68,14 @@ diff --git a/osfmk/kern/startup.c b/osfmk/kern/startup.c
  
  
  #if KPERF
-@@ -787,7 +790,9 @@
+@@ -787,7 +790,11 @@
  	 *	Start the user bootstrap.
  	 */
  #ifdef  MACH_BSD
 +	kprintf("SAGIT BOOT: before bsd_init\n");
  	bsd_init();
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(9);
 +	kprintf("SAGIT BOOT: after bsd_init\n");
  #endif
  
@@ -135,12 +137,17 @@ diff --git a/iokit/Kernel/IOStartIOKit.cpp b/iokit/Kernel/IOStartIOKit.cpp
 diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 --- a/bsd/kern/bsd_init.c
 +++ b/bsd/kern/bsd_init.c
-@@ -1131,7 +1131,10 @@
+@@ -1131,7 +1131,15 @@
  	u_int32_t       flags;
  	kern_return_t   err;
  
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(6);
 +	kprintf("SAGIT ROOT: before IOFindBSDRoot\n");
  	err = IOFindBSDRoot(rootdevice, sizeof(rootdevice), &rootdev, &flags);
++	if (!err) {
++		sweet_fbcon_stage(7);
++	}
 +	kprintf("SAGIT ROOT: IOFindBSDRoot error=%d device=%s major=%d minor=%d\n",
 +	    err, rootdevice, major(rootdev), minor(rootdev));
  	if (err) {
@@ -175,7 +182,7 @@ diff --git a/bsd/vfs/vfs_subr.c b/bsd/vfs/vfs_subr.c
  		mp->mnt_devvp = rootvp;
  #if defined(ARM64_BOARD_CONFIG_SWEET)
  		/*
-@@ -1270,12 +1274,14 @@
+@@ -1270,12 +1274,16 @@
  		}
  #endif
  
@@ -188,6 +195,8 @@ diff --git a/bsd/vfs/vfs_subr.c b/bsd/vfs/vfs_subr.c
  
 +		printf("SAGIT ROOT: filesystem %s returned %d\n", vfsp->vfc_name, error);
  		if (!error) {
++			extern void sweet_fbcon_stage(unsigned int stage);
++			sweet_fbcon_stage(8);
  			if (bdevvp_rootvp != rootvp) {
  				/*
 diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
@@ -288,7 +297,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +/*
 + * Persistent Sagit bring-up indicator.  The framebuffer console clears only
 + * fbcon_width pixels, leaving this right-hand stripe outside the scrolling
-+ * text area.  Draw only 32 scanlines to bound the diagnostic write cost.
++ * text area.  Keep a separate 16x16 tile for each reached checkpoint.
 + */
 +void
 +sweet_fbcon_stage(unsigned int stage)
@@ -297,13 +306,13 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 14) {
 +		return;
 +	}
-+	uint32_t color = colors[stage < 6 ? stage : 0];
-+	for (uint32_t y = 0; y < fbcon_height && y < 32; y++) {
++	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
++	for (uint32_t y = (stage - 1) * 24; y < stage * 24 - 8 && y < fbcon_height; y++) {
 +		volatile uint32_t *line = fbcon_base + y * (fbcon_stride / 4);
-+		for (uint32_t x = fbcon_status_x; x < fbcon_status_x + 32; x++) {
++		for (uint32_t x = fbcon_status_x + 12; x < fbcon_status_x + 28; x++) {
 +			line[x] = color;
 +		}
 +	}
@@ -368,48 +377,76 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 diff --git a/osfmk/kern/task.c b/osfmk/kern/task.c
 --- a/osfmk/kern/task.c
 +++ b/osfmk/kern/task.c
-@@ -787,6 +787,7 @@
+@@ -787,6 +787,9 @@
  task_wait_to_return(void)
  {
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(10);
 +	kprintf("SAGIT TASK: task_wait_to_return entered\n");
  	task_t task = current_task();
  
  	is_write_lock(task->itk_space);
  
-@@ -818,6 +819,7 @@
+@@ -818,6 +821,8 @@
  	is_write_unlock(task->itk_space);
  	turnstile_cleanup();
++	sweet_fbcon_stage(11);
 +	kprintf("SAGIT TASK: return wait cleared\n");
  
  
  #if CONFIG_MACF
  	/*
-@@ -830,6 +832,7 @@
+@@ -830,6 +835,8 @@
  	mach_kauth_cred_thread_update();
  	mac_proc_notify_exec_complete(current_proc());
  #endif
  
++	sweet_fbcon_stage(12);
 +	kprintf("SAGIT TASK: before thread_bootstrap_return\n");
  	thread_bootstrap_return();
  }
 diff --git a/bsd/kern/kern_sig.c b/bsd/kern/kern_sig.c
 --- a/bsd/kern/kern_sig.c
 +++ b/bsd/kern/kern_sig.c
-@@ -3301,6 +3301,9 @@
+@@ -3301,6 +3301,11 @@
  	int     signum;
  	static int bsd_init_done = 0;
  
-+	if (!bsd_init_done) {
++	extern void sweet_fbcon_stage(unsigned int stage);
++	if (!bsd_init_done && p != NULL && p->p_pid == 1) {
++		sweet_fbcon_stage(13);
 +		printf("SAGIT TASK: first bsd_ast entered\n");
 +	}
  	if (p == NULL) {
  		return;
  	}
-@@ -3402,6 +3405,7 @@
+@@ -3402,6 +3407,8 @@
  	if (!bsd_init_done) {
  		bsd_init_done = 1;
++		sweet_fbcon_stage(14);
 +		printf("SAGIT TASK: bsd_ast calling bsdinit_task\n");
  		bsdinit_task();
  	}
  }
  
+diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
+--- a/pexpert/arm/pe_serial.c
++++ b/pexpert/arm/pe_serial.c
+@@ -736,7 +736,17 @@
+ fbcon_newline(void)
+ {
++	uint32_t old_row = fbcon_row;
+ 	fbcon_col = 0;
+ 	fbcon_row = (fbcon_row + 1) % fbcon_rows;
+ 	fbcon_clear_row(fbcon_row);
+ 	fbcon_clear_row((fbcon_row + 1) % fbcon_rows);
++	if (fbcon_status_x != 0) {
++		uint32_t stride = fbcon_stride / 4;
++		for (uint32_t y = 0; y < 4; y++) {
++			for (uint32_t x = fbcon_status_x; x < fbcon_status_x + 8; x++) {
++				fbcon_base[(old_row * 16 * FBCON_SCALE + y) * stride + x] = FBCON_BG;
++				fbcon_base[(fbcon_row * 16 * FBCON_SCALE + y) * stride + x] = 0xff00ffffu;
++			}
++		}
++	}
+ }
