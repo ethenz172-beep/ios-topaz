@@ -603,7 +603,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,25 @@
+@@ -3833,7 +3833,39 @@
  	}
  
 +	extern void vm_pageout_continue(void);
@@ -614,6 +614,20 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	if (trace_pageout) {
 +		pageout_selection_sampled = true;
 +		sweet_fbcon_stage(20);
++#if defined(ARM64_BOARD_CONFIG_SWEET)
++		uint64_t ctl = __builtin_arm_rsr64("CNTV_CTL_EL0");
++		uint64_t cval = __builtin_arm_rsr64("CNTV_CVAL_EL0");
++		uint64_t count = __builtin_arm_rsr64("CNTVCT_EL0");
++		uint64_t pending = __builtin_arm_rsr64("ICC_HPPIR1_EL1") & 0xffffff;
++		uint64_t pmr = __builtin_arm_rsr64("ICC_PMR_EL1");
++		uint64_t group1 = __builtin_arm_rsr64("ICC_IGRPEN1_EL1");
++		uint64_t deadline = os_atomic_load(&sagit_pid1_sample_deadline, relaxed);
++		uint64_t now = mach_absolute_time();
++		kprintf("SAGIT TIMER: ctl=%llx compare_delta=%lld pending=%llu pmr=%llx group1=%llu\n",
++		    (unsigned long long)ctl, (long long)(cval - count), (unsigned long long)pending,
++		    (unsigned long long)pmr, (unsigned long long)group1);
++		kprintf("SAGIT TIMER: sample_delta=%lld\n", (long long)(deadline - now));
++#endif
 +	}
  	do {
  		thread_lock(self);
