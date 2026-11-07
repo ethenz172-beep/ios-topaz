@@ -306,7 +306,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 19) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 21) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -550,3 +550,31 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
  }
  
  static void
+diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
+--- a/osfmk/kern/sched_prim.c
++++ b/osfmk/kern/sched_prim.c
+@@ -3833,7 +3833,24 @@
+ 	}
+ 
++	extern void vm_pageout_continue(void);
++	extern void sweet_fbcon_stage(unsigned int stage);
++	static bool pageout_selection_sampled;
++	bool trace_pageout = !pageout_selection_sampled &&
++	    continuation == (thread_continue_t)vm_pageout_continue;
++	if (trace_pageout) {
++		pageout_selection_sampled = true;
++		sweet_fbcon_stage(20);
++	}
+ 	do {
+ 		thread_lock(self);
+ 		new_thread = thread_select(self, processor, &reason);
+ 		thread_unlock(self);
++		if (trace_pageout) {
++			trace_pageout = false;
++			sweet_fbcon_stage(21);
++			kprintf("SAGIT TASK: pageout select idle=%d self=%d init_cont=%d pri=%d recommended=%d\n",
++			    new_thread == processor->idle_thread, new_thread == self,
++			    new_thread->continuation == (thread_continue_t)task_wait_to_return,
++			    new_thread->sched_pri, processor->is_recommended);
++		}
+ 	} while (!thread_invoke(self, new_thread, reason));
