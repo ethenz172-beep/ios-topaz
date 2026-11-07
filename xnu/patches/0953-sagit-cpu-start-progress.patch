@@ -509,3 +509,44 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
  
  	thread_continue_t       continuation = self->continuation;
  	void                    *parameter   = self->parameter;
+@@ -5617,6 +5622,25 @@
++/* Sample the first user thread after the bootstrap wake. */
++extern void sagit_trace_bootstrap_runq(thread_t thread);
++
++void
++sagit_trace_bootstrap_runq(thread_t thread)
++{
++	spl_t s = splsched();
++	thread_lock(thread);
++	int state = thread->state;
++	int priority = thread->sched_pri;
++	processor_t runq = thread->runq;
++	processor_t chosen = thread->chosen_processor;
++	thread_unlock(thread);
++	splx(s);
++	kprintf("SAGIT TASK: pid1 state=0x%x pri=%d runq=%d chosen=%d\n",
++	    state, priority, runq ? (int)runq->cpu_id : -1,
++	    chosen ? (int)chosen->cpu_id : -1);
++}
++
+ void
+ thread_setrun(
+ 	thread_t                        thread,
+ 	sched_options_t                 options)
+ {
+ 	processor_t                     processor = PROCESSOR_NULL;
+diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1197,7 +1197,11 @@
+ 
+ 	ipc_task_enable(get_threadtask(thread));
+ 
++	thread_reference(thread);
+ 	task_clear_return_wait(get_threadtask(thread), TCRW_CLEAR_ALL_WAIT);
++	extern void sagit_trace_bootstrap_runq(thread_t thread);
++	sagit_trace_bootstrap_runq(thread);
++	thread_deallocate(thread);
+ }
+ 
+ static void
