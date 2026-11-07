@@ -306,7 +306,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 17) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 19) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -478,3 +478,34 @@ diff --git a/osfmk/kern/startup.c b/osfmk/kern/startup.c
  	vm_pageout();
  	/*NOTREACHED*/
  }
+diff --git a/osfmk/vm/vm_pageout.c b/osfmk/vm/vm_pageout.c
+--- a/osfmk/vm/vm_pageout.c
++++ b/osfmk/vm/vm_pageout.c
+@@ -3903,6 +3903,12 @@
+ 	vm_free_page_unlock();
+ 	vm_page_unlock_queues();
+ 
++	static bool first_block = true;
++	if (first_block) {
++		first_block = false;
++		extern void sweet_fbcon_stage(unsigned int stage);
++		sweet_fbcon_stage(18);
++	}
+ 	thread_block((thread_continue_t)vm_pageout_continue);
+ 	/*NOTREACHED*/
+ }
+diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
+--- a/osfmk/kern/sched_prim.c
++++ b/osfmk/kern/sched_prim.c
+@@ -2946,6 +2946,11 @@
+ 		    pl, (pl < 0 ? "unlocking an unlocked mutex or spinlock" :
+ 		    "blocking while holding a spinlock, or within interrupt context"));
+ 	}
++	if (thread != self && thread->continuation == (thread_continue_t)task_wait_to_return) {
++		extern void sweet_fbcon_stage(unsigned int stage);
++		sweet_fbcon_stage(19);
++	}
++
+ 
+ 	thread_continue_t       continuation = self->continuation;
+ 	void                    *parameter   = self->parameter;
