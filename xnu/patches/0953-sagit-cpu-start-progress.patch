@@ -306,7 +306,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 21) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 24) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -534,9 +534,10 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +#include <kern/thread_call.h>
  #include <kern/thread_group.h>
  #include <kern/ledger.h>
-@@ -5617,6 +5622,45 @@
+@@ -5617,6 +5622,50 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
++uint64_t sagit_pid1_sample_deadline;
 +
 +static void
 +sagit_log_bootstrap_runq(thread_t thread, const char *phase)
@@ -558,6 +559,8 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +sagit_delayed_pid1_sample(thread_call_param_t param, __unused thread_call_param_t unused)
 +{
 +	thread_t thread = (thread_t)param;
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(24);
 +	sagit_log_bootstrap_runq(thread, "late");
 +	thread_deallocate(thread);
 +}
@@ -571,7 +574,9 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	thread_reference(thread);
 +	thread_call_setup(&sample, sagit_delayed_pid1_sample, thread);
 +	clock_interval_to_deadline(2, NSEC_PER_SEC, &deadline);
++	os_atomic_store(&sagit_pid1_sample_deadline, deadline, relaxed);
 +	thread_call_enter_delayed(&sample, deadline);
++	kprintf("SAGIT TASK: pid1 late sample armed\n");
 +}
 +
  void
@@ -624,3 +629,26 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +			    new_thread->sched_pri, processor->is_recommended);
 +		}
  	} while (!thread_invoke(self, new_thread, reason));
+diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
+--- a/osfmk/arm64/sleh.c
++++ b/osfmk/arm64/sleh.c
+@@ -1948,8 +1948,19 @@
+ 	if (intid == sweet_vtimer_intid) {
+ 		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
++		extern uint64_t sagit_pid1_sample_deadline;
++		extern void sweet_fbcon_stage(unsigned int stage);
++		uint64_t deadline = os_atomic_load(&sagit_pid1_sample_deadline, relaxed);
++		bool sample_irq = deadline != 0 && mach_absolute_time() >= deadline;
++		if (sample_irq) {
++			os_atomic_store(&sagit_pid1_sample_deadline, 0, relaxed);
++			sweet_fbcon_stage(22);
++		}
+ 		cdp->cpu_decrementer = -1; /* Large */
+ 		INTERRUPT_MASKED_DEBUG_START(rtclock_intr, DBG_INTR_TYPE_TIMER);
+ 		rtclock_intr(TRUE);
+ 		INTERRUPT_MASKED_DEBUG_END();
+ 		__builtin_arm_wsr64("ICC_EOIR1_EL1", iar);
++		if (sample_irq) {
++			sweet_fbcon_stage(23);
++		}
+ 	} else if (intid < 16) {
