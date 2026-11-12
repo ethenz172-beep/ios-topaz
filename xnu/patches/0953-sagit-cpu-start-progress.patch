@@ -603,7 +603,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,39 @@
+@@ -3833,7 +3833,40 @@
  	}
  
 +	extern void vm_pageout_continue(void);
@@ -615,6 +615,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +		pageout_selection_sampled = true;
 +		sweet_fbcon_stage(20);
 +#if defined(ARM64_BOARD_CONFIG_SWEET)
++		extern uint64_t sagit_pid1_sample_deadline;
 +		uint64_t ctl = __builtin_arm_rsr64("CNTV_CTL_EL0");
 +		uint64_t cval = __builtin_arm_rsr64("CNTV_CVAL_EL0");
 +		uint64_t count = __builtin_arm_rsr64("CNTVCT_EL0");
