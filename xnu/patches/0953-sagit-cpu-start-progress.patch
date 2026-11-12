@@ -306,7 +306,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 24) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 26) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -534,10 +534,11 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +#include <kern/thread_call.h>
  #include <kern/thread_group.h>
  #include <kern/ledger.h>
-@@ -5617,6 +5622,50 @@
+@@ -5617,6 +5622,51 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
 +uint64_t sagit_pid1_sample_deadline;
++bool sagit_trace_next_timer_irq;
 +
 +static void
 +sagit_log_bootstrap_runq(thread_t thread, const char *phase)
@@ -603,7 +604,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,58 @@
+@@ -3833,7 +3833,60 @@
  	}
  
 +	extern void vm_pageout_continue(void);
@@ -616,6 +617,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +		sweet_fbcon_stage(20);
 +#if defined(ARM64_BOARD_CONFIG_SWEET)
 +		extern uint64_t sagit_pid1_sample_deadline;
++		extern bool sagit_trace_next_timer_irq;
 +		uint64_t ctl = __builtin_arm_rsr64("CNTV_CTL_EL0");
 +		uint64_t cval = __builtin_arm_rsr64("CNTV_CVAL_EL0");
 +		uint64_t count = __builtin_arm_rsr64("CNTVCT_EL0");
@@ -646,6 +648,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +				sagit_trace_timer_ppi();
 +			}
 +		}
++		os_atomic_store(&sagit_trace_next_timer_irq, true, relaxed);
 +#endif
 +	}
  	do {
@@ -665,11 +668,16 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,19 @@
+@@ -1948,8 +1948,27 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
 +		extern void sweet_fbcon_stage(unsigned int stage);
++		extern bool sagit_trace_next_timer_irq;
++		bool first_irq = os_atomic_xchg(&sagit_trace_next_timer_irq, false, relaxed);
++		if (first_irq) {
++			sweet_fbcon_stage(25);
++		}
 +		uint64_t deadline = os_atomic_load(&sagit_pid1_sample_deadline, relaxed);
 +		bool sample_irq = deadline != 0 && mach_absolute_time() >= deadline;
 +		if (sample_irq) {
@@ -681,6 +689,9 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
  		rtclock_intr(TRUE);
  		INTERRUPT_MASKED_DEBUG_END();
  		__builtin_arm_wsr64("ICC_EOIR1_EL1", iar);
++		if (first_irq) {
++			sweet_fbcon_stage(26);
++		}
 +		if (sample_irq) {
 +			sweet_fbcon_stage(23);
 +		}
