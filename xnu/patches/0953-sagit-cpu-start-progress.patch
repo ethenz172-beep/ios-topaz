@@ -668,7 +668,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,45 @@
+@@ -1948,8 +1948,50 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
@@ -707,8 +707,13 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			    (long long)(compare - now), (unsigned long long)ctl,
 +			    (long long)(deadline - mach_absolute_time()));
 +		}
-+		if (deadline != 0 && (irq_count == 2 || irq_count == 16 || irq_count == 128 || sample_irq)) {
-+			kprintf("SAGIT TIMER: irq_count=%u sample_due=%d\n", irq_count, sample_irq);
++		if (deadline != 0 && (irq_count == 2 || irq_count == 3 || irq_count == 4 || irq_count == 8 || sample_irq)) {
++			uint64_t compare = __builtin_arm_rsr64("CNTV_CVAL_EL0");
++			uint64_t now = __builtin_arm_rsr64("CNTVCT_EL0");
++			uint64_t ctl = __builtin_arm_rsr64("CNTV_CTL_EL0");
++			kprintf("SAGIT TIMER: irq_count=%u sample_due=%d next_delta=%lld ctl=%llx remaining=%lld\n",
++			    irq_count, sample_irq, (long long)(compare - now),
++			    (unsigned long long)ctl, (long long)(deadline - mach_absolute_time()));
 +		}
 +		if (sample_irq) {
 +			sweet_fbcon_stage(23);
