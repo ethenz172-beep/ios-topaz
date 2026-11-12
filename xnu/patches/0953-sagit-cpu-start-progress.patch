@@ -603,7 +603,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,53 @@
+@@ -3833,7 +3833,58 @@
  	}
  
 +	extern void vm_pageout_continue(void);
@@ -633,13 +633,18 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +		int64_t ticks = (int64_t)(cval - count);
 +		if (freq != 0 && ticks <= (int64_t)(freq / 100)) {
 +			/* The iteration limit also covers a counter that stops advancing. */
-+			for (unsigned int i = 0; i < 1000000 && (int64_t)(__builtin_arm_rsr64("CNTVCT_EL0") - cval) < 0; i++) {
++			uint64_t sample_at = cval + freq / 10000;
++			for (unsigned int i = 0; i < 1000000 && (int64_t)(__builtin_arm_rsr64("CNTVCT_EL0") - sample_at) < 0; i++) {
 +			}
 +			uint64_t after = __builtin_arm_rsr64("CNTVCT_EL0");
 +			kprintf("SAGIT TIMER: after_delta=%lld ctl=%llx pending=%llu\n",
 +			    (long long)(after - cval),
 +			    (unsigned long long)__builtin_arm_rsr64("CNTV_CTL_EL0"),
 +			    (unsigned long long)(__builtin_arm_rsr64("ICC_HPPIR1_EL1") & 0xffffff));
++			extern void sagit_trace_timer_ppi(void);
++			if ((int64_t)(after - cval) >= 0) {
++				sagit_trace_timer_ppi();
++			}
 +		}
 +#endif
 +	}
@@ -680,3 +685,32 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			sweet_fbcon_stage(23);
 +		}
  	} else if (intid < 16) {
+diff --git a/pexpert/arm/pe_fiq.c b/pexpert/arm/pe_fiq.c
+--- a/pexpert/arm/pe_fiq.c
++++ b/pexpert/arm/pe_fiq.c
+@@ -74,6 +74,25 @@
+ 	panic("%s: cannot find GICR base for core %u", __func__, ml_get_cpu_number(phys_id));
+ }
+ 
++#if defined(SWEET)
++extern void sagit_trace_timer_ppi(void);
++
++void
++sagit_trace_timer_ppi(void)
++{
++	vm_offset_t gicr_pe_base = find_gicr_pe_base();
++	uint32_t id = sweet_vtimer_intid;
++	uint32_t mask = 1u << id;
++	uint32_t enabled = gicr_read32(GICR_ISENABLER0);
++	uint32_t pending = gicr_read32(0x10200); /* GICR_ISPENDR0 */
++	uint32_t active = gicr_read32(0x10300); /* GICR_ISACTIVER0 */
++	uint32_t group = gicr_read32(GICR_IGROUPR0);
++	uint32_t pri = gicr_read32(GICR_IPRIORITYR0 + (id & ~3u)) >> ((id & 3u) * 8);
++	kprintf("SAGIT GIC: id=%u en=%u pend=%u active=%u group=%u pri=%x\n",
++	    id, !!(enabled & mask), !!(pending & mask), !!(active & mask), !!(group & mask), pri & 0xff);
++}
++#endif
++
+ void
+ pe_init_fiq()
+ {
