@@ -603,7 +603,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -3833,7 +3833,40 @@
+@@ -3833,7 +3833,53 @@
  	}
  
 +	extern void vm_pageout_continue(void);
@@ -628,6 +628,19 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +		    (unsigned long long)ctl, (long long)(cval - count), (unsigned long long)pending,
 +		    (unsigned long long)pmr, (unsigned long long)group1);
 +		kprintf("SAGIT TIMER: sample_delta=%lld\n", (long long)(deadline - now));
++		/* Observe only an already-programmed near deadline, without rearming it. */
++		uint64_t freq = __builtin_arm_rsr64("CNTFRQ_EL0");
++		int64_t ticks = (int64_t)(cval - count);
++		if (freq != 0 && ticks <= (int64_t)(freq / 100)) {
++			/* The iteration limit also covers a counter that stops advancing. */
++			for (unsigned int i = 0; i < 1000000 && (int64_t)(__builtin_arm_rsr64("CNTVCT_EL0") - cval) < 0; i++) {
++			}
++			uint64_t after = __builtin_arm_rsr64("CNTVCT_EL0");
++			kprintf("SAGIT TIMER: after_delta=%lld ctl=%llx pending=%llu\n",
++			    (long long)(after - cval),
++			    (unsigned long long)__builtin_arm_rsr64("CNTV_CTL_EL0"),
++			    (unsigned long long)(__builtin_arm_rsr64("ICC_HPPIR1_EL1") & 0xffffff));
++		}
 +#endif
 +	}
  	do {
