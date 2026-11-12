@@ -668,7 +668,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,34 @@
+@@ -1948,8 +1948,45 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
@@ -679,6 +679,14 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			sweet_fbcon_stage(25);
 +		}
 +		uint64_t deadline = os_atomic_load(&sagit_pid1_sample_deadline, relaxed);
++		/* Sagit bring-up arms this probe on its single boot CPU. */
++		static unsigned int irq_count;
++		if (first_irq) {
++			irq_count = 0;
++		}
++		if (deadline != 0) {
++			irq_count++;
++		}
 +		bool sample_irq = deadline != 0 && mach_absolute_time() >= deadline;
 +		if (sample_irq) {
 +			os_atomic_store(&sagit_pid1_sample_deadline, 0, relaxed);
@@ -698,6 +706,9 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			kprintf("SAGIT TIMER: rearm_delta=%lld ctl=%llx sample_delta=%lld\n",
 +			    (long long)(compare - now), (unsigned long long)ctl,
 +			    (long long)(deadline - mach_absolute_time()));
++		}
++		if (deadline != 0 && (irq_count == 2 || irq_count == 16 || irq_count == 128 || sample_irq)) {
++			kprintf("SAGIT TIMER: irq_count=%u sample_due=%d\n", irq_count, sample_irq);
 +		}
 +		if (sample_irq) {
 +			sweet_fbcon_stage(23);
