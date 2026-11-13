@@ -41,7 +41,7 @@ diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
 new file mode 100644
 --- /dev/null
 +++ b/bsd/dev/sweet_ufs.c
-@@ -0,0 +1,541 @@
+@@ -0,0 +1,536 @@
 +/*
 + * SWEET internal UFS root device (read-only).
 + *
@@ -515,7 +515,6 @@ new file mode 100644
 +	}
 +	PE_parse_boot_argn("ufsroot", want, sizeof(want));
 +
-+	printf("SWEET UFS: before MMIO map and DMA allocation\n");
 +	su.regs = ml_io_map(reg[0], reg[1]);
 +	if (kmem_alloc_contig(kernel_map, &su.dma, DMA_SIZE, PAGE_MASK, 0, 0,
 +	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
@@ -531,17 +530,14 @@ new file mode 100644
 +	su.secsize = DEV_BSIZE;
 +
 +	lck_mtx_lock(&sweet_ufs_lock);
-+	printf("SWEET UFS: before host takeover\n");
 +	error = ufs_take_over_host();
 +	if (!error) {
-+		printf("SWEET UFS: host takeover OK; probing LUN\n");
 +		static const uint8_t tur[6] = { 0x00 };
 +		/* The first command after the bootloader may report a unit attention. */
 +		for (int i = 0; i < 3 && (error = ufs_scsi(tur, sizeof(tur), 0)); i++) {
 +		}
 +	}
 +	if (!error) {
-+		printf("SWEET UFS: LUN ready; scanning GPT\n");
 +		error = ufs_find_partition(want);
 +	}
 +	lck_mtx_unlock(&sweet_ufs_lock);
@@ -549,7 +545,6 @@ new file mode 100644
 +		return error;
 +	}
 +
-+	printf("SWEET UFS: partition found; registering BSD disk\n");
 +	su.bmajor = bdevsw_add(-1, &sweet_ufs_bdevsw);
 +	if (su.bmajor < 0) {
 +		return ENXIO;

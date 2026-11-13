@@ -202,12 +202,13 @@ diff --git a/bsd/vfs/vfs_subr.c b/bsd/vfs/vfs_subr.c
 diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
 --- a/bsd/dev/sweet_ufs.c
 +++ b/bsd/dev/sweet_ufs.c
-@@ -979,12 +979,15 @@
+@@ -979,12 +979,16 @@
  int
  sweet_ufs_rootdev(dev_t *dev)
  {
-+	printf("SAGIT ROOT: UFS rootdev entered\n");
++	printf("SAGIT ROOT: UFS rootdev entered, ready=%d\n", su.ready);
  	if (!su.ready) {
++		printf("SAGIT ROOT: before UFS controller initialization\n");
  		int error = sweet_ufs_init();
 +		printf("SAGIT ROOT: UFS init returned %d\n", error);
  		if (error) {
