@@ -687,7 +687,7 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +		if (deadline != 0) {
 +			irq_count++;
 +		}
-+		if (deadline != 0 && irq_count >= 10 && irq_count <= 12) {
++		if (deadline != 0 && irq_count >= 12 && irq_count <= 16) {
 +			kprintf("SAGIT TIMER: IRQ%u entered\n", irq_count);
 +		}
 +		bool sample_irq = deadline != 0 && mach_absolute_time() >= deadline;
@@ -710,7 +710,7 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			    (long long)(compare - now), (unsigned long long)ctl,
 +			    (long long)(deadline - mach_absolute_time()));
 +		}
-+		if (deadline != 0 && (irq_count == 8 || (irq_count >= 10 && irq_count <= 12) || irq_count == 16 || sample_irq)) {
++		if (deadline != 0 && (irq_count == 8 || (irq_count >= 12 && irq_count <= 16) || sample_irq)) {
 +			uint64_t compare = __builtin_arm_rsr64("CNTV_CVAL_EL0");
 +			uint64_t now = __builtin_arm_rsr64("CNTVCT_EL0");
 +			uint64_t ctl = __builtin_arm_rsr64("CNTV_CTL_EL0");
