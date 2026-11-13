@@ -718,8 +718,8 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			    irq_count, sample_irq, (long long)(compare - now),
 +			    (unsigned long long)ctl, (long long)(deadline - mach_absolute_time()));
 +		}
-+		if (deadline != 0 && irq_count == 11) {
-+			kprintf("SAGIT TIMER: IRQ11 post-EOI DAIF=%llx HPPIR=%llu\n",
++		if (deadline != 0 && irq_count == 12) {
++			kprintf("SAGIT TIMER: IRQ12 post-EOI DAIF=%llx HPPIR=%llu\n",
 +			    (unsigned long long)__builtin_arm_rsr64("DAIF"), (unsigned long long)(__builtin_arm_rsr64("ICC_HPPIR1_EL1") & 0xffffff));
 +		}
 +		if (sample_irq) {
