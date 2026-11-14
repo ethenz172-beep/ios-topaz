@@ -813,3 +813,12 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 +	IOLog("SAGIT ROOT: IOBSD publication returned\n");
  
  #if IOPOLLED_COREFILE
+diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -889,3 +889,5 @@
+ 
++	kprintf("SAGIT ROOT: before IOSecureBSDRoot\n");
+ 	IOSecureBSDRoot(rootdevice);
++	kprintf("SAGIT ROOT: IOSecureBSDRoot returned\n");
+ 
