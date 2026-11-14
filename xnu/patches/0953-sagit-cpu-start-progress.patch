@@ -825,3 +825,15 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
  	IOSecureBSDRoot(rootdevice);
 +	kprintf("SAGIT ROOT: IOSecureBSDRoot returned\n");
  
+diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
+--- a/iokit/bsddev/IOKitBSDInit.cpp
++++ b/iokit/bsddev/IOKitBSDInit.cpp
+@@ -686,6 +686,8 @@
+ 	if ((service = IOService::waitForMatchingService(matching, 30ULL * kSecondScale))) {
++		IOLog("SAGIT ROOT: IOBSD wait matched\n");
+ 		OSSafeReleaseNULL(service);
+ 	} else {
++		IOLog("SAGIT ROOT: IOBSD wait returned without match\n");
+ 		IOLog("!BSD\n");
+ 	}
+ 	matching->release();
