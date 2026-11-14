@@ -307,7 +307,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 26) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 27) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -340,16 +340,18 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 diff --git a/bsd/kern/kern_exec.c b/bsd/kern/kern_exec.c
 --- a/bsd/kern/kern_exec.c
 +++ b/bsd/kern/kern_exec.c
-@@ -6874,6 +6874,8 @@
+@@ -6874,6 +6874,10 @@
  load_init_program(proc_t p)
  {
++	extern void sweet_fbcon_stage(unsigned int stage);
++	sweet_fbcon_stage(27);
 +	kprintf("SAGIT EXEC: load_init_program entered\n");
 +
  	uint32_t i;
  	int error;
  	vm_map_t map = current_map();
  	mach_vm_offset_t scratch_addr = 0;
-@@ -6882,7 +6884,9 @@
+@@ -6882,7 +6886,9 @@
  
 +	kprintf("SAGIT EXEC: before scratch allocation\n");
  	(void) mach_vm_allocate_kernel(map, &scratch_addr, map_page_size, VM_FLAGS_ANYWHERE, VM_KERN_MEMORY_NONE);
