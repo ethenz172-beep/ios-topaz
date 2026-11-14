@@ -846,3 +846,32 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
  	pe = (IOPlatformExpert *) IOService::waitForMatchingService(matching, 30ULL * kSecondScale);
 +	IOLog("SAGIT ROOT: SecureRoot platform wait returned, matched=%d\n", pe != NULL);
  	matching->release();
+diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
+--- a/iokit/Kernel/IOService.cpp
++++ b/iokit/Kernel/IOService.cpp
+@@ -5129,4 +5129,5 @@
+ 	assert(iomediaClass);
+ 
++	const bool traceBSD = matching->getObject(gIOResourceMatchedKey) == gIOBSDKey;
+ 	LOCKWRITENOTIFY();
+ 	wasHiding = gIOServiceHideIOMedia;
+@@ -6124,4 +6125,5 @@
+ 	service = (IOService *) copyExistingServices( matching,
+ 	    kIOServiceMatchedState, kIONotifyOnce );
++		if (traceBSD) IOLog("SAGIT IOBSD: immediate match=%d\n", result != NULL);
+ 
+ 	UNLOCKNOTIFY();
+@@ -6379,5 +6381,6 @@
+ 	    &IOServiceMatchingNotificationHandlerToBlock, NULL, block, priority);
+ 
+-	if (!notify) {
++	if (traceBSD) IOLog("SAGIT IOBSD: notifier registered=%d\n", notify != NULL);
++		if (!notify) {
+ 		Block_release(block);
+ 	}
+@@ -6503,4 +6506,5 @@
+ 			clock_absolutetime_interval_to_deadline(deadline, &deadline);
+ 			SLEEPNOTIFYTO(&result, deadline);
++			if (traceBSD) IOLog("SAGIT IOBSD: sleep returned, match=%d\n", result != NULL);
+ 		} else {
+ 			SLEEPNOTIFY(&result);
