@@ -837,3 +837,12 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
  		IOLog("!BSD\n");
  	}
  	matching->release();
+diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
+--- a/iokit/bsddev/IOKitBSDInit.cpp
++++ b/iokit/bsddev/IOKitBSDInit.cpp
+@@ -1021,3 +1021,5 @@
+ 	assert(matching);
++	IOLog("SAGIT ROOT: SecureRoot platform wait entered\n");
+ 	pe = (IOPlatformExpert *) IOService::waitForMatchingService(matching, 30ULL * kSecondScale);
++	IOLog("SAGIT ROOT: SecureRoot platform wait returned, matched=%d\n", pe != NULL);
+ 	matching->release();
