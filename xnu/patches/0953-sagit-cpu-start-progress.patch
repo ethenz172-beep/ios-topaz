@@ -756,3 +756,24 @@ diff --git a/pexpert/arm/pe_fiq.c b/pexpert/arm/pe_fiq.c
  void
  pe_init_fiq()
  {
+diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
+--- a/iokit/bsddev/IOKitBSDInit.cpp
++++ b/iokit/bsddev/IOKitBSDInit.cpp
+@@ -679,4 +679,5 @@
+ 	int xchar, dchar;
+ 
++	IOLog("SAGIT ROOT: entering IOBSD resource wait\n");
+ 	// stall here for anyone matching on the IOBSD resource to finish (filesystems)
+ 	matching = IOService::serviceMatching(gIOResourcesKey);
+@@ -692,4 +693,5 @@
+ 	matching = NULL;
+ 
++	IOLog("SAGIT ROOT: IOBSD resource wait finished\n");
+ 	if (mountAttempts++) {
+ 		IOLog("mount(%d) failed\n", mountAttempts);
+@@ -708,4 +710,5 @@
+ 	}
+ 
++	IOLog("SAGIT ROOT: parsed rd=%s\n", rdBootVar);
+ 	if ((regEntry = IORegistryEntry::fromPath( "/chosen", gIODTPlane ))) {
+ 		do {
