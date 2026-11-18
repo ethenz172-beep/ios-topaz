@@ -307,7 +307,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 34) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 35) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -671,7 +671,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,60 @@
+@@ -1948,8 +1948,63 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
@@ -689,6 +689,9 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +		}
 +		if (deadline != 0) {
 +			irq_count++;
++		}
++		if (deadline != 0 && irq_count == 12) {
++			sweet_fbcon_stage(35);
 +		}
 +		if (deadline != 0 && irq_count >= 12 && irq_count <= 16) {
 +			kprintf("SAGIT TIMER: IRQ%u entered\n", irq_count);
