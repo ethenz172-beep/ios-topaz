@@ -1,5 +1,10 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Sagit IOBSD checkpoints
+
+- Run 44299232006 booted twice with the read-only image. The first photo showed IOBSD match and reached notifier removal. The second showed the IOFindBSDRoot entry marker only. Neither establishes an IRQ12 outcome.
+- The next image adds tiles 36 (IOBSD match), 37 (before notifier removal) and 38 (after removal). CI and hardware verification pending.
+
 ## Current handoff: Mi 6 (`sagit`) local port branch
 
 - Active local branch: `sagit-port-sync`, tracking the user's fork branch `sagit-port`, based on `topaz`. The fork branch has a successful hosted build at Actions run `41844858240` (XNU build + `sagit-bringup` jobs).
