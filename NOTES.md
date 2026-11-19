@@ -1,5 +1,11 @@
 # iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
+## Sagit run 44358189789 hardware result
+
+- Attempt 3 built successfully after two hosted runner allocation failures. Read-only boot image SHA256 ec92f5d03d79de2fdafe6cf0647b5e6968375a60db125b9bd3d2ceab45a52112 was accepted by temporary fastboot boot.
+- User photo f70c5c74 shows IOFindBSDRoot error=0, HFS iOSRoot mounted, SecureRoot returned, bsd_init done, PID1 wake result=0, and explicit IRQ12 entered and post-EOI logs. This proves IRQ12 reached the post-EOI diagnostic, not exception return or PID1 execution.
+- No load_init_program entry is visible. Next diagnosis should inspect exception return / scheduler and PID1 continuation. Fastboot device absent at the latest check.
+
 ## Sagit IOBSD checkpoints
 
 - Run 44299232006 booted twice with the read-only image. The first photo showed IOBSD match and reached notifier removal. The second showed the IOFindBSDRoot entry marker only. Neither establishes an IRQ12 outcome.
