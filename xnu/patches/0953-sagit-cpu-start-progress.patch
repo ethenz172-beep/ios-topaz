@@ -288,7 +288,7 @@ diff --git a/bsd/kern/bsd_init.c b/bsd/kern/bsd_init.c
 diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 --- a/pexpert/arm/pe_serial.c
 +++ b/pexpert/arm/pe_serial.c
-@@ -719,8 +719,33 @@
+@@ -719,8 +719,35 @@
  
  static volatile uint32_t *fbcon_base;
  static uint32_t fbcon_width, fbcon_height, fbcon_stride;
@@ -300,6 +300,8 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 + * fbcon_width pixels, leaving this right-hand stripe outside the scrolling
 + * text area.  Keep a separate 16x16 tile for each reached checkpoint.
 + */
++volatile unsigned int sagit_irq12_exit_probe;
++
 +void
 +sweet_fbcon_stage(unsigned int stage)
 +{
@@ -307,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 39) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 41) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -671,7 +673,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,66 @@
+@@ -1948,8 +1948,68 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
@@ -735,7 +737,9 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +			sweet_fbcon_stage(23);
 +		}
 +		if (deadline != 0 && irq_count == 12) {
++			extern volatile unsigned int sagit_irq12_exit_probe;
 +			sweet_fbcon_stage(39);
++			sagit_irq12_exit_probe = 1;
 +		}
  	} else if (intid < 16) {
 diff --git a/pexpert/arm/pe_fiq.c b/pexpert/arm/pe_fiq.c
@@ -924,3 +928,22 @@ diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
  	}
  
  	OSSafeReleaseNULL(cancellationHandler);
+diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
+--- a/osfmk/arm64/sleh.c
++++ b/osfmk/arm64/sleh.c
+@@ -1978,1 +1978,15 @@
++ #if defined(SWEET)
++	extern volatile unsigned int sagit_irq12_exit_probe;
++	extern void sweet_fbcon_stage(unsigned int stage);
++	bool trace_irq12_exit = sagit_irq12_exit_probe == 1;
++	if (trace_irq12_exit) {
++		sagit_irq12_exit_probe = 2;
++		sweet_fbcon_stage(40);
++	}
++ #endif
+ 	sleh_interrupt_handler_epilogue();
++ #if defined(SWEET)
++	if (trace_irq12_exit) {
++		sweet_fbcon_stage(41);
++	}
++ #endif

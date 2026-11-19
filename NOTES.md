@@ -452,3 +452,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
   Verify with tools/xnu-cc.py (compile+symbols) and patch-order simulation before the single CI run.
 
 - Next diagnostic adds tile 39 at the end of the IRQ12 timer branch, after the post-EOI log. This distinguishes reaching that log from completing the remainder of the branch. Exception return is still unverified.
+
+- Run 44554977223 passed and temporarily booted read-only image e460418444200e09f731e7633425d555bd6634553db1463306676c8ee927548b. Photo dc709716 shows tile 39 reached. Add gated tiles 40/41 before/after the common interrupt epilogue. Build and hardware verification pending.
