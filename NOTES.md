@@ -450,3 +450,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
      cpu_init, before arm_vm_init.
   5. panic hook at top of panic_trap_to_debugger: va_copy + _doprnt(fmt, &copy, sweet_early_putc, 16).
   Verify with tools/xnu-cc.py (compile+symbols) and patch-order simulation before the single CI run.
+
+- Next diagnostic adds tile 39 at the end of the IRQ12 timer branch, after the post-EOI log. This distinguishes reaching that log from completing the remainder of the branch. Exception return is still unverified.
