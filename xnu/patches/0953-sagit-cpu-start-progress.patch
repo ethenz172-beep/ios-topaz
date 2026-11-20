@@ -931,7 +931,10 @@ diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1978,1 +1978,15 @@
+@@ -1974,7 +1974,21 @@
+ 	}
+ #endif
+ 
 + #if defined(SWEET)
 +	extern volatile unsigned int sagit_irq12_exit_probe;
 +	extern void sweet_fbcon_stage(unsigned int stage);
@@ -947,3 +950,6 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +		sweet_fbcon_stage(41);
 +	}
 + #endif
+ #if MACH_ASSERT
+ 	if (preemption_level != sleh_get_preemption_level()) {
+ 		panic("fiq type %u changed preemption level from %d to %d", type, preemption_level, sleh_get_preemption_level());
