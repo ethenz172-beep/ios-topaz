@@ -309,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 43) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 44) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -502,9 +502,10 @@ diff --git a/osfmk/vm/vm_pageout.c b/osfmk/vm/vm_pageout.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -2936,6 +2936,9 @@
+@@ -2936,6 +2936,10 @@
 +/* CPU 0 owns this one-shot diagnostic budget with interrupts masked. */
 +static unsigned int sagit_dispatch_samples;
++static uint64_t sagit_pid1_tid;
 +
  static boolean_t
  thread_invoke(
@@ -512,10 +513,14 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
  	thread_t                        thread,
  	ast_t                           reason)
  {
-@@ -2946,6 +2949,18 @@
+@@ -2946,6 +2949,22 @@
  		    pl, (pl < 0 ? "unlocking an unlocked mutex or spinlock" :
  		    "blocking while holding a spinlock, or within interrupt context"));
  	}
++	if (thread != self && sagit_pid1_tid != 0 && thread_tid(thread) == sagit_pid1_tid) {
++		extern void sweet_fbcon_stage(unsigned int stage);
++		sweet_fbcon_stage(44);
++	}
 +	if (thread != self && thread->continuation == (thread_continue_t)task_wait_to_return) {
 +		extern void sweet_fbcon_stage(unsigned int stage);
 +		sweet_fbcon_stage(19);
@@ -539,7 +544,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +#include <kern/thread_call.h>
  #include <kern/thread_group.h>
  #include <kern/ledger.h>
-@@ -5617,6 +5622,51 @@
+@@ -5617,6 +5622,53 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
 +uint64_t sagit_pid1_sample_deadline;
@@ -576,6 +581,8 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +{
 +	static thread_call_data_t sample;
 +	uint64_t deadline;
++	sagit_pid1_tid = thread_tid(thread);
++	kprintf("SAGIT TASK: pid1 tid=%llu\n", (unsigned long long)sagit_pid1_tid);
 +	sagit_log_bootstrap_runq(thread, "wake");
 +	thread_reference(thread);
 +	thread_call_setup(&sample, sagit_delayed_pid1_sample, thread);
