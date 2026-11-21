@@ -309,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 41) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 43) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -850,10 +850,13 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 --- a/iokit/bsddev/IOKitBSDInit.cpp
 +++ b/iokit/bsddev/IOKitBSDInit.cpp
-@@ -1021,3 +1021,5 @@
+@@ -1021,3 +1021,8 @@
  	assert(matching);
++	extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
++	sweet_fbcon_stage(42);
 +	IOLog("SAGIT ROOT: SecureRoot platform wait entered\n");
  	pe = (IOPlatformExpert *) IOService::waitForMatchingService(matching, 30ULL * kSecondScale);
++	sweet_fbcon_stage(43);
 +	IOLog("SAGIT ROOT: SecureRoot platform wait returned, matched=%d\n", pe != NULL);
  	matching->release();
 diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
