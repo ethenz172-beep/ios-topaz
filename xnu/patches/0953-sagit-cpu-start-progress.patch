@@ -586,7 +586,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	sagit_log_bootstrap_runq(thread, "wake");
 +	thread_reference(thread);
 +	thread_call_setup(&sample, sagit_delayed_pid1_sample, thread);
-+	clock_interval_to_deadline(2, NSEC_PER_SEC, &deadline);
++	clock_interval_to_deadline(100, NSEC_PER_MSEC, &deadline);
 +	os_atomic_store(&sagit_pid1_sample_deadline, deadline, relaxed);
 +	thread_call_enter_delayed(&sample, deadline);
 +	kprintf("SAGIT TASK: pid1 late sample armed\n");

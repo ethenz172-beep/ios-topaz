@@ -458,3 +458,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
 - Run 44756931001 built and booted temporarily, read-only image SHA256 0b80e7d63a1d06c130a2d278b3dd52c0354129c3b5ca13db80d214bf485ca50f. Photo f5b2fe32 shows HFS root mounted and SecureRoot platform wait entered, without a visible return or IRQ12 markers. No Fastboot device at latest check. Add tiles 42/43 before/after SecureRoot platform service wait.
 
 - Run 44904883072 user photo 971607a2 shows SecureRoot returned, BSD init done, and IRQ13 entered. PID1 exec entry still absent. Add explicit PID1 thread ID and tile 44 when thread_invoke selects that thread. Verification pending.
+
+- Run 44918490312 rerun packaged successfully and booted read-only image 15fc207315377ad67a4b3996c96a6244b06d5277c5b0c3d7743dd792a65dd7bb. First photo f42c7af8 showed IOBSD waiting. Repeat photo 811fb2f6 shows root mounted, BSD init done, PID1 tid=166 runnable at priority 31 on CPU0; tile 44 not visibly reached. Move existing delayed sample from 2 seconds to 100 ms to capture state earlier. Hardware verification pending; no Fastboot device at latest check.
