@@ -869,12 +869,14 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
 --- a/iokit/Kernel/IOService.cpp
 +++ b/iokit/Kernel/IOService.cpp
-@@ -6480,6 +6480,8 @@
+@@ -6480,6 +6480,10 @@
  		    &cancelArgs);
  	}
  
 +	extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
-+	const bool traceBSD = matching->getObject(gIOResourceMatchedKey) == gIOBSDKey;
++	OSString *traceClass = OSDynamicCast(OSString, matching->getObject(gIOProviderClassKey));
++	const bool traceBSD = matching->getObject(gIOResourceMatchedKey) == gIOBSDKey ||
++	    (traceClass != NULL && traceClass->isEqualTo("IOPlatformExpert"));
  	LOCKWRITENOTIFY();
  	do{
  		if (cancelArgs.canceled) {
