@@ -309,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 49) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 54) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -1000,3 +1000,34 @@ diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
 +	}
  
  	release();
+diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
+--- a/iokit/Kernel/IOService.cpp
++++ b/iokit/Kernel/IOService.cpp
+@@ -6410,10 +6410,27 @@
+ {
++	extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
++	bool traceWake = newService->metaCast("IOPlatformExpert") != NULL;
++	if (traceWake) {
++		sweet_fbcon_stage(50);
++	}
+ 	LOCKWRITENOTIFY();
++	if (traceWake) {
++		sweet_fbcon_stage(51);
++	}
+ 	if (!*((IOService **) ref)) {
+ 		newService->retain();
+ 		(*(IOService **) ref) = newService;
++		if (traceWake) {
++			sweet_fbcon_stage(52);
++		}
+ 		WAKEUPNOTIFY(ref);
++		if (traceWake) {
++			sweet_fbcon_stage(53);
++		}
+ 	}
+ 	UNLOCKNOTIFY();
++	if (traceWake) {
++		sweet_fbcon_stage(54);
++	}
+ 
+ 	return false;
