@@ -309,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 44) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 49) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -965,3 +965,38 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
  #if MACH_ASSERT
  	if (preemption_level != sleh_get_preemption_level()) {
  		panic("fiq type %u changed preemption level from %d to %d", type, preemption_level, sleh_get_preemption_level());
+diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
+--- a/iokit/Kernel/IOService.cpp
++++ b/iokit/Kernel/IOService.cpp
+@@ -6923,4 +6923,14 @@
+ _IOServiceNotifier::remove()
+ {
++	extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
++	OSString *traceClass = matching ? OSDynamicCast(OSString, matching->getObject(gIOProviderClassKey)) : NULL;
++	bool traceRemove = matching && (matching->getObject(gIOResourceMatchedKey) == gIOBSDKey ||
++	    (traceClass && traceClass->isEqualTo("IOPlatformExpert")));
++	if (traceRemove) {
++		sweet_fbcon_stage(45);
++	}
+ 	LOCKWRITENOTIFY();
++	if (traceRemove) {
++		sweet_fbcon_stage(46);
++	}
+ 
+@@ -6937,7 +6947,16 @@
+ 	state &= ~kIOServiceNotifyEnable;
+ 
++	if (traceRemove) {
++		sweet_fbcon_stage(47);
++	}
+ 	wait();
++	if (traceRemove) {
++		sweet_fbcon_stage(48);
++	}
+ 
+ 	UNLOCKNOTIFY();
++	if (traceRemove) {
++		sweet_fbcon_stage(49);
++	}
+ 
+ 	release();
