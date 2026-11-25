@@ -513,7 +513,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
  	thread_t                        thread,
  	ast_t                           reason)
  {
-@@ -2946,6 +2949,22 @@
+@@ -2946,6 +2949,25 @@
  		    pl, (pl < 0 ? "unlocking an unlocked mutex or spinlock" :
  		    "blocking while holding a spinlock, or within interrupt context"));
  	}
@@ -527,6 +527,9 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	}
 +	if (thread != self && current_processor()->cpu_id == 0 && sagit_dispatch_samples != 0) {
 +		sagit_dispatch_samples--;
++		kprintf("SAGIT SWITCH: from=%llu state=0x%x pri=%d to=%llu state=0x%x reason=0x%x\n",
++		    (unsigned long long)thread_tid(self), self->state, self->sched_pri,
++		    (unsigned long long)thread_tid(thread), thread->state, reason);
 +		kprintf("SAGIT DISPATCH: tid=%llu pri=%d cont=0x%llx kernel=%d\n",
 +		    (unsigned long long)thread_tid(thread), thread->sched_pri,
 +		    (unsigned long long)VM_KERNEL_UNSLIDE(thread->continuation),

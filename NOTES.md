@@ -466,3 +466,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
 - Run 45192433908 built and booted read-only image 2c41f92ac3b11fa24d1d805f7d617da05acc20c632cb7720d2ea21fe3be5e2bf. Photo d5e8210c shows match=1, notification unlock returned, before notifier removal. Add tiles 45 entry, 46 notification lock acquired, 47 before callback wait, 48 after wait, 49 notification unlock returned in matching notifier removal. CI and hardware verification pending.
 
 - Photo d60178e9 from run 45414504070 shows platform service waiting after root mount. Add platform sync notification callback tiles 50 entry, 51 locked, 52 before wake, 53 wake returned, 54 unlocked. Build and hardware verification pending.
+
+- Run 45422789035 photo 6354f6da shows PID1 still runnable, priority 31, queued CPU0 at phase=late (~100 ms). This is one snapshot, not proof of indefinite starvation. Add outgoing/incoming thread states and switch reason to the bounded dispatch trace. Hardware/build pending.
