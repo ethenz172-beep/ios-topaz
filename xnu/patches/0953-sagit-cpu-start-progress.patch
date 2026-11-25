@@ -502,9 +502,15 @@ diff --git a/osfmk/vm/vm_pageout.c b/osfmk/vm/vm_pageout.c
 diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 --- a/osfmk/kern/sched_prim.c
 +++ b/osfmk/kern/sched_prim.c
-@@ -2936,6 +2936,10 @@
+@@ -2936,6 +2936,16 @@
 +/* CPU 0 owns this one-shot diagnostic budget with interrupts masked. */
 +static unsigned int sagit_dispatch_samples;
++void sagit_trace_platform_dispatch(void);
++void
++sagit_trace_platform_dispatch(void)
++{
++	sagit_dispatch_samples = 24;
++}
 +static uint64_t sagit_pid1_tid;
 +
  static boolean_t
@@ -860,9 +866,11 @@ diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 diff --git a/iokit/bsddev/IOKitBSDInit.cpp b/iokit/bsddev/IOKitBSDInit.cpp
 --- a/iokit/bsddev/IOKitBSDInit.cpp
 +++ b/iokit/bsddev/IOKitBSDInit.cpp
-@@ -1021,3 +1021,8 @@
+@@ -1021,3 +1021,10 @@
  	assert(matching);
 +	extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
++	extern void sagit_trace_platform_dispatch(void) __asm__("_sagit_trace_platform_dispatch");
++	sagit_trace_platform_dispatch();
 +	sweet_fbcon_stage(42);
 +	IOLog("SAGIT ROOT: SecureRoot platform wait entered\n");
  	pe = (IOPlatformExpert *) IOService::waitForMatchingService(matching, 30ULL * kSecondScale);

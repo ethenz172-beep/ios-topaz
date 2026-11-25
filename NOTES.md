@@ -468,3 +468,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
 - Photo d60178e9 from run 45414504070 shows platform service waiting after root mount. Add platform sync notification callback tiles 50 entry, 51 locked, 52 before wake, 53 wake returned, 54 unlocked. Build and hardware verification pending.
 
 - Run 45422789035 photo 6354f6da shows PID1 still runnable, priority 31, queued CPU0 at phase=late (~100 ms). This is one snapshot, not proof of indefinite starvation. Add outgoing/incoming thread states and switch reason to the bounded dispatch trace. Hardware/build pending.
+
+- Run 45650266036 built and booted read-only image b385c2ea1511c58c337fcaa572e4e69e4d844795e08d767127e62062be47eec1. Photo 9c833f29 shows SecureRoot platform wait before PID1 wake. Enable bounded 24-switch dispatch trace at platform wait entry to observe this earlier phase. CI/hardware pending.
