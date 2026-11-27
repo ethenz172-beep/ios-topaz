@@ -553,11 +553,20 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +#include <kern/thread_call.h>
  #include <kern/thread_group.h>
  #include <kern/ledger.h>
-@@ -5617,6 +5622,56 @@
+@@ -5617,6 +5622,66 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
 +uint64_t sagit_pid1_sample_deadline;
 +bool sagit_trace_next_timer_irq;
++
++void sagit_trace_pid1_interrupted_thread(void);
++void
++sagit_trace_pid1_interrupted_thread(void)
++{
++	thread_t thread = current_thread();
++	kprintf("SAGIT CPU: timer interrupted tid=%llu pri=%d\n",
++	    (unsigned long long)thread_tid(thread), thread->sched_pri);
++}
 +
 +static void
 +sagit_log_bootstrap_runq(thread_t thread, const char *phase)
@@ -586,6 +595,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	    (unsigned long long)thread_tid(current_thread()), current_thread()->sched_pri,
 +	    current_processor()->current_pri, current_processor()->state);
 +	thread_deallocate(thread);
++	sagit_dispatch_samples = 8;
 +}
 +
 +void
@@ -692,7 +702,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 --- a/osfmk/arm64/sleh.c
 +++ b/osfmk/arm64/sleh.c
-@@ -1948,8 +1948,68 @@
+@@ -1948,8 +1948,70 @@
  	if (intid == sweet_vtimer_intid) {
  		sleh_interrupt_handler_prologue(state, DBG_INTR_TYPE_TIMER);
 +		extern uint64_t sagit_pid1_sample_deadline;
@@ -719,6 +729,8 @@ diff --git a/osfmk/arm64/sleh.c b/osfmk/arm64/sleh.c
 +		}
 +		bool sample_irq = deadline != 0 && mach_absolute_time() >= deadline;
 +		if (sample_irq) {
++			extern void sagit_trace_pid1_interrupted_thread(void);
++			sagit_trace_pid1_interrupted_thread();
 +			os_atomic_store(&sagit_pid1_sample_deadline, 0, relaxed);
 +			sweet_fbcon_stage(22);
 +		}

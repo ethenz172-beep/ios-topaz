@@ -474,3 +474,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
 - Symbolized run 45655428157 continuations: thread_call_thread, vm_pageout_iothread_external, vm_object_reaper_thread, _mpsc_queue_thread_continue, thread_call_daemon_continue, sched_timeshare_maintenance_continue. State 0xd includes TH_WAIT, so snapshots do not establish continuous runnable starvation. Add current sampling thread and processor priority/state to late PID1 sample. Verification pending.
 
 - Run 46004215697 booted read-only image f59b7be742d21ef6a4b7eb15a1658a5ddc001d4656bef795b972f87823142f24. Photo 4865ac3d again reaches before notifier removal, no return. Add bounded notifier callback wait thread IDs plus tiles 55 before sleep and 56 after sleep. Build/hardware pending.
+
+- Run 46028247628 built and temporarily booted read-only image 4ddecad62f33890e7fadfaf29ee7575e75e67c0c076a17b64c5ae8283cd2c085. Photo 8612f7cc shows BSD init completed, PID1 tid=166 still runnable on CPU0 at the 100 ms sample, and the sample itself running in tid=131. Record the thread interrupted when the sample becomes due and enable eight switch logs as the sample callback finishes.
