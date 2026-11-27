@@ -309,7 +309,7 @@ diff --git a/pexpert/arm/pe_serial.c b/pexpert/arm/pe_serial.c
 +		0xff000000u, 0xffff0000u, 0xffff8000u,
 +		0xffffff00u, 0xff00ff00u, 0xff00ffffu
 +	};
-+	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 54) {
++	if (fbcon_base == NULL || fbcon_status_x == 0 || stage == 0 || stage > 56) {
 +		return;
 +	}
 +	uint32_t color = stage < 6 ? colors[stage] : FBCON_FG;
@@ -1045,3 +1045,25 @@ diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
 +	}
  
  	return false;
+diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
+--- a/iokit/Kernel/IOService.cpp
++++ b/iokit/Kernel/IOService.cpp
+@@ -6903,4 +6903,18 @@
+ 		if (doWait) {
++			extern void sweet_fbcon_stage(unsigned int stage) __asm__("_sweet_fbcon_stage");
++			static unsigned int traceWaitBudget = 4;
++			bool traceWait = traceWaitBudget != 0;
++			if (traceWait) {
++				traceWaitBudget--;
++				sweet_fbcon_stage(55);
++				kprintf("SAGIT NOTIFY: waiter=%llu callback=%llu state=0x%x\n",
++				    (unsigned long long)thread_tid(current_thread()),
++				    (unsigned long long)thread_tid(next->thread), next->thread->state);
++			}
+ 			state |= kIOServiceNotifyWaiter;
+ 			SLEEPNOTIFY(this);
++			if (traceWait) {
++				sweet_fbcon_stage(56);
++				kprintf("SAGIT NOTIFY: callback wait returned\n");
++			}
+ 		}

@@ -472,3 +472,5 @@ What it took today (in order): 0058 HID services (Apple IOHIDFamily-1915 user cl
 - Run 45650266036 built and booted read-only image b385c2ea1511c58c337fcaa572e4e69e4d844795e08d767127e62062be47eec1. Photo 9c833f29 shows SecureRoot platform wait before PID1 wake. Enable bounded 24-switch dispatch trace at platform wait entry to observe this earlier phase. CI/hardware pending.
 
 - Symbolized run 45655428157 continuations: thread_call_thread, vm_pageout_iothread_external, vm_object_reaper_thread, _mpsc_queue_thread_continue, thread_call_daemon_continue, sched_timeshare_maintenance_continue. State 0xd includes TH_WAIT, so snapshots do not establish continuous runnable starvation. Add current sampling thread and processor priority/state to late PID1 sample. Verification pending.
+
+- Run 46004215697 booted read-only image f59b7be742d21ef6a4b7eb15a1658a5ddc001d4656bef795b972f87823142f24. Photo 4865ac3d again reaches before notifier removal, no return. Add bounded notifier callback wait thread IDs plus tiles 55 before sleep and 56 after sleep. Build/hardware pending.
