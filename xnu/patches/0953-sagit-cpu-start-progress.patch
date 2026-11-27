@@ -553,7 +553,7 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +#include <kern/thread_call.h>
  #include <kern/thread_group.h>
  #include <kern/ledger.h>
-@@ -5617,6 +5622,53 @@
+@@ -5617,6 +5622,56 @@
 +/* Sample the first user thread after the bootstrap wake. */
 +extern void sagit_trace_bootstrap_runq(thread_t thread);
 +uint64_t sagit_pid1_sample_deadline;
@@ -582,6 +582,9 @@ diff --git a/osfmk/kern/sched_prim.c b/osfmk/kern/sched_prim.c
 +	extern void sweet_fbcon_stage(unsigned int stage);
 +	sweet_fbcon_stage(24);
 +	sagit_log_bootstrap_runq(thread, "late");
++	kprintf("SAGIT CPU: sample tid=%llu pri=%d cpu_pri=%d cpu_state=%d\n",
++	    (unsigned long long)thread_tid(current_thread()), current_thread()->sched_pri,
++	    current_processor()->current_pri, current_processor()->state);
 +	thread_deallocate(thread);
 +}
 +
