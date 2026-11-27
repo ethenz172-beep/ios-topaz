@@ -1056,9 +1056,9 @@ diff --git a/iokit/Kernel/IOService.cpp b/iokit/Kernel/IOService.cpp
 +			if (traceWait) {
 +				traceWaitBudget--;
 +				sweet_fbcon_stage(55);
-+				kprintf("SAGIT NOTIFY: waiter=%llu callback=%llu state=0x%x\n",
++				kprintf("SAGIT NOTIFY: waiter=%llu callback=%llu\n",
 +				    (unsigned long long)thread_tid(current_thread()),
-+				    (unsigned long long)thread_tid(next->thread), next->thread->state);
++				    (unsigned long long)thread_tid(next->thread));
 +			}
  			state |= kIOServiceNotifyWaiter;
  			SLEEPNOTIFY(this);
